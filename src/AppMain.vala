@@ -22,6 +22,8 @@ class AppMain: Granite.Application {
 		
 		controller.process_list();
 		
+        controller.gui_controller.main_window.show_all();
+		
 		var mainloop_thread = new Thread<bool>("MainThread", () => {
         	Gdk.threads_enter();
         	Gtk.main();
@@ -34,6 +36,9 @@ class AppMain: Granite.Application {
 		if (dir_specified) {
 			controller.rec_load_video_files(dir);
 			controller.process_list();
+			Gdk.threads_enter();
+		    controller.gui_controller.main_window.show_all();
+		    Gdk.threads_leave();
 		}
 		
 		mainloop_thread.join();

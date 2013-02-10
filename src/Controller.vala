@@ -75,11 +75,11 @@ class Controller {
             if ((movie.info_file == null) || (movie.poster_file == null)) { 
                 if (!get_and_save_info(movie)) {iter.remove(); continue;} // info not found == not a movie file
             }
-            movie.load_info();            
+            movie.load_info();
+            Gdk.threads_enter();  
             this.gui_controller.add_movie_item(movie);
+            Gdk.threads_leave();
 		}
-        
-        this.gui_controller.main_window.show_all();
         
     }
     
