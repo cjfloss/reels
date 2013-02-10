@@ -15,7 +15,7 @@ class Controller {
             if (!config_dir.make_directory()) {stdout.printf("Could not create ~/.config/Reels/"); return;}
         }
         
-        this.gui_controller = new GUIController(app);
+        this.gui_controller = new GUIController(app, this);
         
     }
     
@@ -72,6 +72,8 @@ class Controller {
         while (iter.next() == true) {
         
             movie = iter.get();
+            stdout.printf("processing %s\n", movie.video_file.get_basename());
+            
             // info_file will be unset if not found or broken
             if ((movie.info_file == null) || (movie.poster_file == null)) { 
                 if (!get_and_save_info(movie)) {iter.remove(); continue;} // info not found == not a movie file
@@ -79,9 +81,20 @@ class Controller {
             
             movie.load_info();
             
+            //Thread.usleep(500000);
+            
+            //Gdk.threads_enter();
             this.gui_controller.add_movie_item(movie);
+            //Gdk.threads_leave();
         
         }
+        
+        // Emit signal to show the added movies
+        this.batch_done(); stdout.printf("batch_done emitted\n");
+        
+        Gdk.threads_enter();
+        this.gui_controller.main_window.show_all();
+        Gdk.threads_leave();
     
     }
     
@@ -89,6 +102,8 @@ class Controller {
     private bool get_and_save_info(Movie movie) {
     
         if (!movie.infer_title_and_year()) return false;
+        
+        stdout.printf("Getting info for %s\n", movie.video_file.get_basename());
     
         // send search request
         var uri = "http://api.themoviedb.org/3/search/movie?api_key=f6bfd6dfde719ce3a4c710d7258692cf&query=" + movie.search_title + " " + movie.search_year;
@@ -97,7 +112,7 @@ class Controller {
         message.request_headers.append("Accept", "application/json");
         session.send_message (message);
         string reply = (string) message.response_body.flatten ().data;
-        //stdout.printf("REPLY:\n%s\n\n", reply);
+        stdout.printf("REPLY:\n%s\n\n", reply);
         
          // parse response data
         var parser = new Json.Parser ();
@@ -115,7 +130,7 @@ class Controller {
         message.request_headers.append("Accept", "application/json");
         session.send_message (message);
         reply = (string) message.response_body.flatten ().data;
-        //stdout.printf("REPLY:\n%s\n\n", reply);
+        stdout.printf("REPLY:\n%s\n\n", reply);
         
         parser = new Json.Parser ();
         parser.load_from_data (reply, -1);
@@ -147,8 +162,9 @@ class Controller {
         
         // save local copy of poster image file and assign to movie object
         File remote_image_file = File.new_for_uri("http://cf2.imgobject.com/t/p/w154" + poster_path);
-        File local_image_file = movie_dir.get_child("poster.jpg");
+        File local_image_file = movie_dir.get_child("poster.jpg"); stdout.printf("got this far :D:D:D\n");
     	if (!local_image_file.query_exists()) remote_image_file.copy(local_image_file, GLib.FileCopyFlags.NONE, null, null);
+    	
     	movie.poster_file = local_image_file;
     	
     	//save file path to video file
@@ -213,5 +229,7 @@ class Controller {
     	stdout.printf("Array size: %d\n", this.movie_list.size);
     	
     }
+    
+    public signal void batch_done();
 
 }

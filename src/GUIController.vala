@@ -1,7 +1,7 @@
 class GUIController: Object {
 
 	
-    public GUIController(Granite.Application app) {
+    public GUIController(Granite.Application app, Controller controller) {
         
         
         this.movie_list = new Gee.ArrayList<Movie>(null);
@@ -14,13 +14,28 @@ class GUIController: Object {
         
         this.main_window.show_all();
         
-    }    
+        this.controller.batch_done.connect((cont) => {
+        	stdout.printf("show_all() called again\n");
+        	cont.gui_controller.movie_item_container.show_all(); 
+        	Gtk.main_quit();
+        });
+        
+        stdout.printf("show_all called\n");
+        
+        
+        
+    }
     
+    // reference to Controller object that created this object (used for connecing to signals)
+    private Controller controller; 
+    
+    // thread for Gtk main loop
+    //public Thread<bool> mainloop_thread;
     
     
     // ############## GUI Items ########################################################
     
-    private Gtk.Window main_window; /*{
+    public Gtk.Window main_window; /*{
         get {return main_window;}
         set {main_window = value;}
     }*/
@@ -101,14 +116,23 @@ class GUIController: Object {
     
     public void add_movie_item(Movie movie) {
     
-        //stdout.printf("\nadd_movie_item\n");
+        stdout.printf("adding %s to GUI\n", movie.movie_info.title);
+        
+        //check for duplicate
+        var iter = this.movie_list.list_iterator();
+        Movie movie_in_list;
+        while (iter.next()) {
+        	movie_in_list = iter.get();
+        	if (movie_in_list.movie_info.id == movie.movie_info.id) {
+        		stdout.printf("%s already in GUI\n", movie.movie_info.title);
+        		return;
+        	}
+        }
+        
         var movie_item = create_item_for_movie(movie);
-        //var hbox = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 0);
-        //hbox.pack_start(movie_item, true, true, 0);
         var frame = new Gtk.Frame(null);
         frame.add(movie_item);
         this.movie_item_container.pack_start(frame, false, false, 0);
-        this.movie_item_container.show_all();
         
         this.movie_list.add(movie);
 		
