@@ -10,6 +10,8 @@ class AppMain: Granite.Application {
 			if (dir.query_exists())	dir_specified = true;
 		}
 		
+		Gdk.threads_init();
+		
 		Gtk.init(ref args);
 		
 		var app = new AppMain();
@@ -18,13 +20,28 @@ class AppMain: Granite.Application {
 		
 		controller.load_cached_movies();
 		
-		if (dir_specified) {
-			controller.rec_load_video_files(dir);
-		}
-		
 		controller.process_list();
 		
-		Gtk.main();
+        controller.gui_controller.main_window.show_all();
+		
+		var mainloop_thread = new Thread<bool>("MainThread", () => {
+        	Gdk.threads_enter();
+        	Gtk.main();
+        	Gdk.threads_leave();
+        	return true;} );
+        	
+        stdout.printf("mainloop started\n");
+        
+		
+		if (dir_specified) {
+			controller.rec_load_video_files(dir);
+			controller.process_list();
+			Gdk.threads_enter();
+		    controller.gui_controller.main_window.show_all();
+		    Gdk.threads_leave();
+		}
+		
+		mainloop_thread.join();
 		
 		return 0;
 	

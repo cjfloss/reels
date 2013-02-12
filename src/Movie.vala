@@ -66,6 +66,7 @@ class Movie {
         var parser = new Json.Parser();
         parser.load_from_file(this.info_file.get_path());
         var root =  parser.get_root().get_object();
+        this.movie_info.id = root.get_int_member("id");
         this.movie_info.title = root.get_string_member("title");
         this.movie_info.description = root.get_string_member("description");
         this.movie_info.tagline = root.get_string_member("tagline");
@@ -76,6 +77,8 @@ class Movie {
 }
 
 class MovieInfo {
+
+	public int64 id;
 
     public string title;
     

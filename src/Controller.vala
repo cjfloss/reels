@@ -15,7 +15,7 @@ class Controller {
             if (!config_dir.make_directory()) {stdout.printf("Could not create ~/.config/Reels/"); return;}
         }
         
-        this.gui_controller = new GUIController(app);
+        this.gui_controller = new GUIController(app, this);
         
     }
     
@@ -50,7 +50,6 @@ class Controller {
                      
                     if (dup == false) {
                         this.movie_list.add(new Movie(dir.get_child(filename), null, null));
-                        //stdout.printf("ADDED=======>" + filename + "\n");
                     } else {stdout.printf("FOUND DUPLICATE: " + filename + "\n");}
                     
                 }
@@ -70,25 +69,26 @@ class Controller {
         var iter = this.movie_list.list_iterator();
         Movie movie;
         while (iter.next() == true) {
-        
             movie = iter.get();
+            stdout.printf("processing %s\n", movie.video_file.get_basename());
             // info_file will be unset if not found or broken
             if ((movie.info_file == null) || (movie.poster_file == null)) { 
                 if (!get_and_save_info(movie)) {iter.remove(); continue;} // info not found == not a movie file
             }
-            
             movie.load_info();
-            
+            Gdk.threads_enter();  
             this.gui_controller.add_movie_item(movie);
+            Gdk.threads_leave();
+		}
         
-        }
-    
     }
     
     // looks up info from TMDb for movie and returns it with and info_file and poster_file
     private bool get_and_save_info(Movie movie) {
     
         if (!movie.infer_title_and_year()) return false;
+        
+        stdout.printf("Getting info for %s\n", movie.video_file.get_basename());
     
         // send search request
         var uri = "http://api.themoviedb.org/3/search/movie?api_key=f6bfd6dfde719ce3a4c710d7258692cf&query=" + movie.search_title + " " + movie.search_year;
@@ -149,6 +149,7 @@ class Controller {
         File remote_image_file = File.new_for_uri("http://cf2.imgobject.com/t/p/w154" + poster_path);
         File local_image_file = movie_dir.get_child("poster.jpg");
     	if (!local_image_file.query_exists()) remote_image_file.copy(local_image_file, GLib.FileCopyFlags.NONE, null, null);
+    	
     	movie.poster_file = local_image_file;
     	
     	//save file path to video file
@@ -158,15 +159,6 @@ class Controller {
     	return true;
      
     }
-    
-    /* TODO:function to load cached movies.
-        -iterate through comfig directory
-        -look for folders with path file inside
-        -verify file exists and is video file
-        -if yes try to load with info and poster else abort
-        -move to next folder
-    */
-    
     
     //load movies cached in the config_dir. Supposed to be run before rec_load_video_files()
     public void load_cached_movies() {
@@ -179,21 +171,16 @@ class Controller {
         	
         	
             if (!(file_info.get_content_type() == "inode/directory")) continue;
-            var movie_dir = dir.get_child(file_info.get_name()); stdout.printf("found: %s\n", movie_dir.get_basename());
+            var movie_dir = dir.get_child(file_info.get_name()); 
+            stdout.printf("found: %s\n", movie_dir.get_basename());
             GLib.File pathfile = movie_dir.get_child("path"); //look for path file
            
             if (!pathfile.query_exists()) continue; // fuck it if no path file exists 
             
             string path;
-            GLib.FileUtils.get_contents(pathfile.get_path(), out path, null);  //stdout.printf("path: %s\n", path);
-            GLib.File video_file = GLib.File.new_for_path(path); //if (video_file.query_exists()) stdout.printf("FILE EXISTS!!\n");
-            if (!(video_file.query_exists())) {
-            	//stdout.printf("CONTINUE 1\n");continue;
-            } /*else {
-            	if (file_info.get_content_type() != "video/mp4") {
-            		if (file_info.get_content_type() != "video/x-matroska") {stdout.printf("CONTINUE 2\n"); continue;}
-            	}
-            }*/
+            GLib.FileUtils.get_contents(pathfile.get_path(), out path, null);
+            GLib.File video_file = GLib.File.new_for_path(path);
+            if (!(video_file.query_exists())) continue;
             GLib.File infofile;
             GLib.File posterfile = null;
             if ((infofile = movie_dir.get_child("info")).query_exists() && (posterfile = movie_dir.get_child("poster.jpg")).query_exists()) { // if movie info and poster exist
@@ -205,13 +192,10 @@ class Controller {
         	
         }
         
-        
-        var iter = this.movie_list.list_iterator();
-        while (iter.next() == true) {
-        	//stdout.printf("list contains - %s\n", iter.get().video_file.get_path());
-        }
     	stdout.printf("Array size: %d\n", this.movie_list.size);
     	
     }
+    
+    public signal void batch_done();
 
 }
