@@ -80,11 +80,12 @@ class GUIController: Object {
         var vbox = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
         vbox.pack_start(toolbar, false, false, 0);
         
-        var frame = new Gtk.Frame(null);
+        //var frame = new Gtk.Frame(null);
         var scrolled = new Gtk.ScrolledWindow(null, null);
-        this.movie_item_container = new Gtk.Box(Gtk.Orientation.VERTICAL, 3);
+        scrolled.name = "content_area";
+        this.movie_item_container = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
         
-        frame.add(scrolled);
+        //frame.add(scrolled);
         this.movie_item_container.set_homogeneous(false);
         scrolled.add_with_viewport(movie_item_container);
         
@@ -104,7 +105,7 @@ class GUIController: Object {
         
 	    var pane = new Granite.Widgets.ThinPaned();
 		pane.pack1(source_list, true, false);
-		pane.pack2(frame, true, false);
+		pane.pack2(scrolled, true, false);
         pane.set_position(100);
         
         vbox.pack_start(pane, true, true, 0);
@@ -112,14 +113,22 @@ class GUIController: Object {
         main_window.add(vbox);
         
         // Gtk theming
+        
         var css_provider = new Gtk.CssProvider();
         this.movie_item_container.name = "movie_item_container";
         css_provider.load_from_data("""
-        	GtkWidget#movie_item_container, .movie_item_container, GtkButton * {background-color:'white';}
+        	
+        	GtkScrolledWindow#content_area * {background-color: #ffffff;}
+        	GtkFrame {
+        		border-style: inset; 
+        		border-top-width: 1px;
+        		border-bottom-width: 1px;
+        		border-bottom-color: #e0e0e0;
+        		border-bottom-color: #e0e0e0;
+        		
+        	}
         """, -1);
-        var style_context = this.movie_item_container.get_style_context();
-        style_context.add_class("movie_item_container");
-        style_context.add_provider_for_screen(this.main_window.get_screen(), css_provider, Gtk.STYLE_PROVIDER_PRIORITY_USER);
+        (new Gtk.StyleContext()).add_provider_for_screen(this.main_window.get_screen(), css_provider, Gtk.STYLE_PROVIDER_PRIORITY_USER);
         
     
     }
@@ -201,7 +210,9 @@ class GUIController: Object {
         hbox.pack_start(vbox, true, true, 20);
         
         movie_item.set_homogeneous(false);
-        movie_item.pack_start(hbox);
+        movie_item.pack_start(hbox, false, false, 2);
+        
+        movie_item.get_style_context().add_class("movie-item");
         
       return movie_item;
 
