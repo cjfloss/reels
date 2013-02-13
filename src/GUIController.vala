@@ -87,10 +87,39 @@ class GUIController: Object {
         frame.add(scrolled);
         this.movie_item_container.set_homogeneous(false);
         scrolled.add_with_viewport(movie_item_container);
-        vbox.pack_start(frame, true, true, 5);
+        
+        // SourceList
+        var source_list = new Granite.Widgets.SourceList();
+        var source_watched = new Granite.Widgets.SourceList.Item("Watched");
+        var source_unwatched = new Granite.Widgets.SourceList.Item("Unwatched");
+        //var source_empty = new Granite.Widgets.SourceList.Item("");
+        var source_category_genres = new Granite.Widgets.SourceList.ExpandableItem("Genres");
+        var source_genres_action = new Granite.Widgets.SourceList.Item("Action");
+        source_category_genres.add(source_genres_action);
+        var source_list_root = source_list.root;
+        source_list_root.add(source_watched);
+        source_list_root.add(source_unwatched);
+        //source_list_root.add(source_empty);
+        source_list_root.add(source_category_genres);
+        
+	    var pane = new Granite.Widgets.ThinPaned();
+		pane.pack1(source_list, true, false);
+		pane.pack2(frame, true, false);
+        pane.set_position(100);
+        
+        vbox.pack_start(pane, true, true, 0);
         
         main_window.add(vbox);
         
+        // Gtk theming
+        var css_provider = new Gtk.CssProvider();
+        this.movie_item_container.name = "movie_item_container";
+        css_provider.load_from_data("""
+        	GtkWidget#movie_item_container, .movie_item_container, GtkButton * {background-color:'white';}
+        """, -1);
+        var style_context = this.movie_item_container.get_style_context();
+        style_context.add_class("movie_item_container");
+        style_context.add_provider_for_screen(this.main_window.get_screen(), css_provider, Gtk.STYLE_PROVIDER_PRIORITY_USER);
         
     
     }
