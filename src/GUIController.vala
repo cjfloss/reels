@@ -123,12 +123,12 @@ class GUIController: Object {
         		border-style: inset; 
         		border-top-width: 1px;
         		border-bottom-width: 1px;
-        		border-bottom-color: #e0e0e0;
-        		border-bottom-color: #e0e0e0;
+        		border-top-color: #909090;
+        		border-bottom-color: #909090;
         		
         	}
         """, -1);
-        (new Gtk.StyleContext()).add_provider_for_screen(this.main_window.get_screen(), css_provider, Gtk.STYLE_PROVIDER_PRIORITY_USER);
+        (new Gtk.StyleContext()).add_provider_for_screen(this.main_window.get_screen(), css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
         
     
     }
@@ -184,7 +184,7 @@ class GUIController: Object {
         poster = new Gtk.Image.from_pixbuf(pixbuf);
         
         //init label
-        label_title.set_markup("<b><big>" + movie.movie_info.title + "</big></b>");
+        label_title.set_markup("<span font-size=\"x-large\" font-weight=\"bold\">" + movie.movie_info.title + "</span>");
         label_desc.set_line_wrap(true); 
         label_desc.set_justify(Gtk.Justification.LEFT);
         label_desc.set_alignment(0.0f, 0.0f);
@@ -222,7 +222,7 @@ class GUIController: Object {
     	
         stdout.printf("\n MOVIE NAME: %s\n\n", movie.movie_info.title);
         	
-    	string[] child_args = {"totem", movie.video_file.get_path()};
+    	string[] child_args = {"vlc", movie.video_file.get_path()};
     	
     	this.main_window.hide();
     	
