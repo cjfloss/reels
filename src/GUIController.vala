@@ -123,8 +123,8 @@ class GUIController: Object {
         		border-style: inset; 
         		border-top-width: 1px;
         		border-bottom-width: 1px;
-        		border-top-color: #909090;
-        		border-bottom-color: #909090;
+        		border-top-color: #c0c0c0;
+        		border-bottom-color: #c0c0c0;
         		
         	}
         """, -1);
