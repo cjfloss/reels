@@ -91,16 +91,24 @@ class GUIController: Object {
         
         // SourceList
         var source_list = new Granite.Widgets.SourceList();
+        var source_all = new Granite.Widgets.SourceList.Item("All");
         var source_watched = new Granite.Widgets.SourceList.Item("Watched");
         var source_unwatched = new Granite.Widgets.SourceList.Item("Unwatched");
-        //var source_empty = new Granite.Widgets.SourceList.Item("");
         var source_category_genres = new Granite.Widgets.SourceList.ExpandableItem("Genres");
+        var source_genres_all = new Granite.Widgets.SourceList.Item("All");
         var source_genres_action = new Granite.Widgets.SourceList.Item("Action");
+        var source_genres_comedy = new Granite.Widgets.SourceList.Item("Comedy");
+        var source_genres_drama = new Granite.Widgets.SourceList.Item("Drama");
+        var source_genres_horror = new Granite.Widgets.SourceList.Item("Horror");
+        source_category_genres.add(source_genres_all);
         source_category_genres.add(source_genres_action);
+        source_category_genres.add(source_genres_comedy);
+        source_category_genres.add(source_genres_drama);
+        source_category_genres.add(source_genres_horror);
         var source_list_root = source_list.root;
+        source_list_root.add(source_all);
         source_list_root.add(source_watched);
         source_list_root.add(source_unwatched);
-        //source_list_root.add(source_empty);
         source_list_root.add(source_category_genres);
         
 	    var pane = new Granite.Widgets.ThinPaned();
@@ -128,7 +136,7 @@ class GUIController: Object {
         		
         	}
         """, -1);
-        (new Gtk.StyleContext()).add_provider_for_screen(this.main_window.get_screen(), css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
+        (new Gtk.StyleContext()).add_provider_for_screen(this.main_window.get_screen(), css_provider, Gtk.STYLE_PROVIDER_PRIORITY_USER);
         
     
     }
