@@ -129,16 +129,7 @@ class GUIController: Object {
         var css_provider = new Gtk.CssProvider();
         this.movie_item_container.name = "movie_item_container";
         css_provider.load_from_data("""
-        	
         	#content_area > GtkViewport, #movie_item_container {background-color: #ffffff;}
-        	GtkFrame {
-        		border-style: inset; 
-        		border-top-width: 1px;
-        		border-bottom-width: 1px;
-        		border-top-color: #c0c0c0;
-        		border-bottom-color: #c0c0c0;
-        		
-        	}
         """, -1);
         (new Gtk.StyleContext()).add_provider_for_screen(this.main_window.get_screen(), css_provider, Gtk.STYLE_PROVIDER_PRIORITY_USER);
         
@@ -161,12 +152,8 @@ class GUIController: Object {
         }
         
         var movie_item = create_item_for_movie(movie);
-        var frame = new Gtk.Frame(null);
-        frame.add(movie_item);
-        this.movie_item_container.pack_start(frame, false, false, 0);
-        
+        this.movie_item_container.pack_start(movie_item, false, false, 0);
         this.movie_list.add(movie);
-        
         this.main_window.show_all();
 		
     }
@@ -225,6 +212,7 @@ class GUIController: Object {
         
         movie_item.set_homogeneous(false);
         movie_item.pack_start(hbox, false, false, 5);
+        movie_item.pack_start(new Gtk.Separator(Gtk.Orientation.HORIZONTAL), false, false, 0);
         
         movie_item.get_style_context().add_class("movie-item");
         
