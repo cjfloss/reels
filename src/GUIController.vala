@@ -59,7 +59,10 @@ class GUIController: Object {
         main_window.set_default_size(1200, 600);
         main_window.set_title("Reels");
         
-        main_window.destroy.connect(Gtk.main_quit);
+        main_window.destroy.connect(() => {
+        	//main_window.hide();
+        	Gtk.main_quit();
+        });
         main_window.set_icon_name("totem");
         
         toolbar = new Gtk.Toolbar();
@@ -82,6 +85,7 @@ class GUIController: Object {
         
         //var frame = new Gtk.Frame(null);
         var scrolled = new Gtk.ScrolledWindow(null, null);
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC);
         scrolled.name = "content_area";
         this.movie_item_container = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
         
@@ -126,7 +130,7 @@ class GUIController: Object {
         this.movie_item_container.name = "movie_item_container";
         css_provider.load_from_data("""
         	
-        	GtkScrolledWindow#content_area * {background-color: #ffffff;}
+        	#content_area > GtkViewport, #movie_item_container {background-color: #ffffff;}
         	GtkFrame {
         		border-style: inset; 
         		border-top-width: 1px;
@@ -162,6 +166,8 @@ class GUIController: Object {
         this.movie_item_container.pack_start(frame, false, false, 0);
         
         this.movie_list.add(movie);
+        
+        this.main_window.show_all();
 		
     }
     
@@ -214,11 +220,11 @@ class GUIController: Object {
         vbox.pack_start(hbox_desc, true, true, 10);
         
         hbox.set_homogeneous(false);
-        hbox.pack_start(poster, false, false, 0);
+        hbox.pack_start(poster, false, false, 5);
         hbox.pack_start(vbox, true, true, 20);
         
         movie_item.set_homogeneous(false);
-        movie_item.pack_start(hbox, false, false, 2);
+        movie_item.pack_start(hbox, false, false, 5);
         
         movie_item.get_style_context().add_class("movie-item");
         
@@ -230,7 +236,7 @@ class GUIController: Object {
     	
         stdout.printf("\n MOVIE NAME: %s\n\n", movie.movie_info.title);
         	
-    	string[] child_args = {"vlc", movie.video_file.get_path()};
+    	string[] child_args = {"totem", movie.video_file.get_path()};
     	
     	this.main_window.hide();
     	
