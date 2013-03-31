@@ -18,21 +18,20 @@ class AppMain: Granite.Application {
 		
 		var controller = new Controller(app);
 		
-		controller.load_cached_movies();
-		
-		controller.process_list();
-		
-        controller.gui_controller.main_window.show_all();
-		
+		controller.gui_controller.main_window.show_all();
+				
 		var mainloop_thread = new Thread<bool>("MainThread", () => {
         	Gdk.threads_enter();
         	Gtk.main();
+	        stdout.printf("mainloop started\n");
         	Gdk.threads_leave();
-        	return true;} );
-        	
-        stdout.printf("mainloop started\n");
+        	return true;
+        } );
         
+		controller.load_cached_movies();
 		
+		controller.process_list();
+        
 		if (dir_specified) {
 			controller.rec_load_video_files(dir);
 			controller.process_list();
