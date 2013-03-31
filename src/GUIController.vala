@@ -125,7 +125,8 @@ class GUIController: Object {
         main_window.add(vbox);
         
         // Gtk theming
-        
+        source_list.get_style_context().add_class(Gtk.STYLE_CLASS_SIDEBAR);
+        toolbar.get_style_context().add_class(Gtk.STYLE_CLASS_PRIMARY_TOOLBAR);
         var css_provider = new Gtk.CssProvider();
         this.movie_item_container.name = "movie_item_container";
         css_provider.load_from_data("""
