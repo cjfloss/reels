@@ -37,12 +37,14 @@ class GUIController: Object {
         set {toolbar = value;}
     }*/
 	
+	private Gtk.ProgressBar progbar;
     
     private Granite.Widgets.AppMenu app_menu; /*{
         get {return app_menu;}
         set {app_menu = value;}
     }*/
     
+    private Gtk.ScrolledWindow scrolled;
     
     private Gtk.Box movie_item_container;
     
@@ -51,6 +53,9 @@ class GUIController: Object {
     
     // list to hold all items currently shown
     private Gee.ArrayList<Movie> movie_list;
+    
+    // step size of progress bar
+    double progbar_step_size;
     
     
     public void init_base_ui() {
@@ -65,14 +70,32 @@ class GUIController: Object {
         });
         main_window.set_icon_name("totem");
         
+        // init main toolbar
         toolbar = new Gtk.Toolbar();
         
+        // dummy button
         var button = new Gtk.ToolButton.from_stock(Gtk.Stock.OPEN);
         toolbar.insert(button, 0);
         
+        // seperator
+        /*
         var separator = new Gtk.ToolItem();
         separator.set_expand(true);
         toolbar.insert(separator, 1);
+        */
+        
+        // progress bar
+        progbar = new Gtk.ProgressBar();
+        var progbar_container_y = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
+        var progbar_container_x = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 0);
+        var progbar_toolitem = new Gtk.ToolItem();
+        progbar_container_x.pack_start(progbar_container_y, true, false, 0);
+        progbar_container_y.pack_start(progbar, true, false, 0);
+        progbar.set_size_request(400, 2);
+        progbar_toolitem.add(progbar_container_x);
+        progbar_toolitem.set_expand(true);
+        toolbar.insert(progbar_toolitem, 1);
+        progbar.visible = false;
         
         var menu = new Gtk.Menu();
         var menu_item = new Gtk.MenuItem.with_label("An Option");
@@ -84,7 +107,7 @@ class GUIController: Object {
         vbox.pack_start(toolbar, false, false, 0);
         
         //var frame = new Gtk.Frame(null);
-        var scrolled = new Gtk.ScrolledWindow(null, null);
+        scrolled = new Gtk.ScrolledWindow(null, null);
         scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC);
         scrolled.name = "content_area";
         this.movie_item_container = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
@@ -137,10 +160,29 @@ class GUIController: Object {
     
     }
     
+    // Ready the progress bar with number of movies
+    public void ready_progbar(int num_steps) {
+        Gdk.threads_enter();
+        this.progbar_step_size = 1.0/(double)num_steps;
+        this.progbar.visible = true;
+        this.scrolled.sensitive = false;
+        Gdk.threads_leave();
+        return;
+    }
+    
+    public void remove_progbar() {
+        Gdk.threads_enter();
+        this.progbar_step_size = 0.0;
+        this.progbar.visible = false;
+        this.scrolled.sensitive = true;
+        Gdk.threads_leave();
+        return;
+    }
+    
     public void add_movie_item(Movie movie) {
     
         stdout.printf("adding %s to GUI\n", movie.movie_info.title);
-        
+        stdout.printf("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
         //check for duplicate
         var iter = this.movie_list.list_iterator();
         Movie movie_in_list;
@@ -152,12 +194,15 @@ class GUIController: Object {
         	}
         }
         
+        Gdk.threads_enter();
         var movie_item = create_item_for_movie(movie);
         this.movie_item_container.pack_start(movie_item, false, false, 0);
         this.movie_list.add(movie);
         this.main_window.show_all();
+        this.progbar.set_fraction(this.progbar.get_fraction() + this.progbar_step_size);
+        Gdk.threads_leave();
 		
-    }
+    }  
     
     public Gtk.Box create_item_for_movie(Movie movie) {
     

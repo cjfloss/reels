@@ -30,7 +30,7 @@ class AppMain: Granite.Application {
         
 		controller.load_cached_movies();
 		
-		controller.process_list();
+		//controller.process_list();
         
 		if (dir_specified) {
 			controller.rec_load_video_files(dir);
