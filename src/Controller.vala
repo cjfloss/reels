@@ -68,6 +68,7 @@ class Controller {
     
         var iter = this.movie_list.list_iterator();
         Movie movie;
+        this.gui_controller.ready_progbar(movie_list.size);
         while (iter.next() == true) {
             movie = iter.get();
             stdout.printf("processing %s\n", movie.video_file.get_basename());
@@ -76,10 +77,11 @@ class Controller {
                 if (!get_and_save_info(movie)) {iter.remove(); continue;} // info not found == not a movie file
             }
             movie.load_info();
-            Gdk.threads_enter();  
+            //Gdk.threads_enter();  
             this.gui_controller.add_movie_item(movie);
-            Gdk.threads_leave();
+            //Gdk.threads_leave();
 		}
+        this.gui_controller.remove_progbar();
         
     }
     
@@ -193,6 +195,8 @@ class Controller {
         }
         
     	stdout.printf("Array size: %d\n", this.movie_list.size);
+    	
+    	this.process_list();
     	
     }
     
