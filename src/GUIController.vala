@@ -71,7 +71,7 @@ class GUIController: Object {
         main_window.set_title("Reels");
         
         main_window.destroy.connect(() => {
-        	//main_window.hide();
+        	this.appmain.async_queue.push(new AsyncMessage("exit", null));
         	Gtk.main_quit();
         });
         main_window.set_icon_name("totem");
@@ -202,7 +202,10 @@ class GUIController: Object {
 		//process response
 		var response = chooser.run ();
 		if (response == Gtk.ResponseType.ACCEPT) {
-			this.appmain.async_queue.push(chooser.get_file());
+			var file = chooser.get_file();
+			GLib.File* file_ptr = file;
+			var message = new AsyncMessage("scandir", (void*)file_ptr);
+			this.appmain.async_queue.push(message);
 			chooser.destroy();
 		} else if (response == Gtk.ResponseType.CANCEL) {
 			chooser.destroy();
@@ -232,7 +235,6 @@ class GUIController: Object {
     public void add_movie_item(Movie movie) {
     
         stdout.printf("adding %s to GUI\n", movie.movie_info.title);
-        stdout.printf("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
         //check for duplicate
         var iter = this.movie_list.list_iterator();
         Movie movie_in_list;

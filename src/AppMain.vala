@@ -8,7 +8,7 @@ class AppMain: Granite.Application {
 	public string bug_link;
 	
 	//the queue though which directories for scanning are recieved from the GUI thread
-	public GLib.AsyncQueue<GLib.File> async_queue;
+	public GLib.AsyncQueue<AsyncMessage> async_queue;
 	
 	AppMain() {
 		this.program_name = "Reels";
@@ -63,18 +63,36 @@ class AppMain: Granite.Application {
 		}
 		
 		// Init async queue from which dirs to scan for movies is recieved
-		app.async_queue = new GLib.AsyncQueue<GLib.File>();
+		app.async_queue = new GLib.AsyncQueue<AsyncMessage>();
 		
 		// loop to check for messages from GUI thread
-		while (controller.gui_controller.main_window != null) {
-			GLib.File file = app.async_queue.try_pop();
-			if (file != null) controller.load_new_movies(file);
+		while (true) {
+			var message = app.async_queue.try_pop();
+			if (message != null) {
+				if (message.command == "scandir") {
+					GLib.File file = (GLib.File*)(message.data);
+					controller.load_new_movies(file);
+				} else if (message.command == "exit") {
+					break;
+				}
+			}
 		}
-		
-		if (mainloop_thread != null) mainloop_thread.join();
 		
 		return 0;
 	
+	}
+
+}
+
+class AsyncMessage {
+
+	public string command;
+	
+	public void* data;
+	
+	public AsyncMessage(string com, void* dat) {
+		this.command = com;
+		this.data = dat;
 	}
 
 }
