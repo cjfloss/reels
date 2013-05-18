@@ -1,21 +1,25 @@
 class GUIController: Object {
 
 	
-    public GUIController(Granite.Application app, Controller controller) {
+    public GUIController(AppMain app, Controller controller) {
         
         this.movie_list = new Gee.ArrayList<Movie>(null);
+        this.appmain = app;
         
         // create window and initial contents
         this.init_base_ui();
         
         //attach main window to application
-        this.main_window.set_application(app);
+        //this.main_window.set_application(app);
         
         this.main_window.show_all();
         
         stdout.printf("show_all called\n");
         
     }
+    
+    // reference to the main Gtk.Application object
+    private AppMain appmain;
     
     // reference to Controller object that created this object (used for connecing to signals)
     private Controller controller; 
@@ -27,10 +31,6 @@ class GUIController: Object {
         get {return main_window;}
         set {main_window = value;}
     }*/
-    public void show_window() {
-    	this.main_window.show_all();
-    	return;
-    }
     
     private Gtk.Toolbar toolbar; /*{
         get {return toolbar;}
@@ -38,6 +38,8 @@ class GUIController: Object {
     }*/
 	
 	private Gtk.ProgressBar progbar;
+    
+    private Granite.Widgets.AboutDialog about_dialog;
     
     private Granite.Widgets.AppMenu app_menu; /*{
         get {return app_menu;}
@@ -57,6 +59,10 @@ class GUIController: Object {
     // step size of progress bar
     double progbar_step_size;
     
+    public void show_window() {
+    	this.main_window.show_all();
+    	return;
+    }
     
     public void init_base_ui() {
     
@@ -73,8 +79,9 @@ class GUIController: Object {
         // init main toolbar
         toolbar = new Gtk.Toolbar();
         
-        // dummy button
+        // load movies button
         var button = new Gtk.ToolButton.from_stock(Gtk.Stock.OPEN);
+        button.clicked.connect(this.file_chooser);
         toolbar.insert(button, 0);
         
         // seperator
@@ -97,9 +104,22 @@ class GUIController: Object {
         toolbar.insert(progbar_toolitem, 1);
         progbar.visible = false;
         
+        
+        
         var menu = new Gtk.Menu();
-        var menu_item = new Gtk.MenuItem.with_label("An Option");
-        menu.append(menu_item);
+        var about_item = new Gtk.MenuItem.with_label("About");
+        about_item.activate.connect(() => {
+        	// About dialog
+		    this.about_dialog = new Granite.Widgets.AboutDialog();
+		    this.about_dialog.authors = this.appmain.authors;
+		    this.about_dialog.comments = this.appmain.comments;
+		    this.about_dialog.bug = this.appmain.bug_link;
+		    this.about_dialog.response.connect((widget, response_id) => {
+		    	if (response_id == Gtk.ResponseType.CANCEL) this.about_dialog.destroy();;
+		    });
+		    this.about_dialog.show_all();
+        });
+        menu.append(about_item);
         app_menu = new Granite.Widgets.AppMenu(menu);
         toolbar.insert(app_menu, -1);
         
@@ -160,21 +180,51 @@ class GUIController: Object {
     
     }
     
+    private void file_chooser() {
+    	// The FileChooserDialog:
+		Gtk.FileChooserDialog chooser = new Gtk.FileChooserDialog (
+				"Select the directory with your movies", this.main_window, Gtk.FileChooserAction.SELECT_FOLDER,
+				Gtk.Stock.CANCEL,
+				Gtk.ResponseType.CANCEL,
+				Gtk.Stock.OPEN,
+				Gtk.ResponseType.ACCEPT);
+
+		// Multiple files can be selected:
+		chooser.select_multiple = false;
+
+		// We are only interested in jpegs:
+		/*
+		Gtk.FileFilter filter = new Gtk.FileFilter ();
+		chooser.set_filter (filter);
+		filter.add_mime_type ("inode/directory");
+		*/
+		
+		//process response
+		var response = chooser.run ();
+		if (response == Gtk.ResponseType.ACCEPT) {
+			this.appmain.async_queue.push(chooser.get_file());
+			chooser.destroy();
+		} else if (response == Gtk.ResponseType.CANCEL) {
+			chooser.destroy();
+		}
+    }
+    
     // Ready the progress bar with number of movies
-    public void ready_progbar(int num_steps) {
+    public void prepare_to_add(int num_steps, bool disable_view) {
         Gdk.threads_enter();
         this.progbar_step_size = 1.0/(double)num_steps;
         this.progbar.visible = true;
-        this.scrolled.sensitive = false;
+        this.scrolled.sensitive = !disable_view;
         Gdk.threads_leave();
         return;
     }
     
-    public void remove_progbar() {
+    public void finalise_adding() {
         Gdk.threads_enter();
         this.progbar_step_size = 0.0;
         this.progbar.visible = false;
         this.scrolled.sensitive = true;
+        this.progbar.set_fraction(0.0);
         Gdk.threads_leave();
         return;
     }
