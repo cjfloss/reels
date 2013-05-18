@@ -6,7 +6,7 @@ class Controller {
     
     public GUIController gui_controller;
     
-    public Controller(Granite.Application app) {
+    public Controller(AppMain app) {
     
         this.movie_list = new Gee.ArrayList<Movie>(null);
         
@@ -24,7 +24,7 @@ class Controller {
     
         // list to hold all newly scanned 
         //var new_movie_list = new Gee.ArrayList<Movie>(null);
-    
+    	if (!dir.query_exists()) return;
         var file_enum = dir.enumerate_children("standard::*", GLib.FileQueryInfoFlags.NONE, null);
         GLib.FileInfo file_info;
         while ((file_info = file_enum.next_file()) != null) {
@@ -68,21 +68,52 @@ class Controller {
     
         var iter = this.movie_list.list_iterator();
         Movie movie;
-        this.gui_controller.ready_progbar(movie_list.size);
+        this.gui_controller.prepare_to_add(movie_list.size, true);
         while (iter.next() == true) {
             movie = iter.get();
             stdout.printf("processing %s\n", movie.video_file.get_basename());
             // info_file will be unset if not found or broken
             if ((movie.info_file == null) || (movie.poster_file == null)) { 
-                if (!get_and_save_info(movie)) {iter.remove(); continue;} // info not found == not a movie file
+                if (!get_and_save_info(movie)) {
+                	stdout.printf("%s not found in online database\n", movie.video_file.get_basename());
+                	iter.remove(); 
+                	continue;
+                } // info not found == not a movie file
             }
             movie.load_info();
             //Gdk.threads_enter();  
             this.gui_controller.add_movie_item(movie);
             //Gdk.threads_leave();
 		}
-        this.gui_controller.remove_progbar();
+        this.gui_controller.finalise_adding();
         
+    }
+    
+    public void load_new_movies(GLib.File dir) {
+    	
+    	this.rec_load_video_files(dir);
+    	var iter = this.movie_list.list_iterator();
+        Movie movie;
+        this.gui_controller.prepare_to_add(movie_list.size, false);
+        while (iter.next() == true) {
+            movie = iter.get();
+            stdout.printf("processing %s\n", movie.video_file.get_basename());
+            // info_file will be unset if not found or broken
+            if ((movie.info_file == null) || (movie.poster_file == null)) { 
+                if (!get_and_save_info(movie)) {
+                	stdout.printf("%s not found in online database\n", movie.video_file.get_basename());
+                	iter.remove(); 
+                	continue;
+                } // info not found == not a movie file
+            }
+            movie.load_info();
+            //Gdk.threads_enter();  
+            this.gui_controller.add_movie_item(movie);
+            //Gdk.threads_leave();
+		}
+        this.gui_controller.finalise_adding();
+        
+    
     }
     
     // looks up info from TMDb for movie and returns it with and info_file and poster_file
@@ -93,7 +124,7 @@ class Controller {
         stdout.printf("Getting info for %s\n", movie.video_file.get_basename());
     
         // send search request
-        var uri = "http://api.themoviedb.org/3/search/movie?api_key=f6bfd6dfde719ce3a4c710d7258692cf&query=" + movie.search_title + " " + movie.search_year;
+        var uri = "http://api.themoviedb.org/3/search/movie?api_key=f6bfd6dfde719ce3a4c710d7258692cf&query=" + movie.search_title + " " /*+ movie.search_year*/ ;
         var session = new Soup.SessionSync ();
         var message = new Soup.Message ("GET", uri);
         message.request_headers.append("Accept", "application/json");
@@ -196,7 +227,27 @@ class Controller {
         
     	stdout.printf("Array size: %d\n", this.movie_list.size);
     	
-    	this.process_list();
+    	var iter = this.movie_list.list_iterator();
+        Movie movie;
+        this.gui_controller.prepare_to_add(movie_list.size, true);
+        while (iter.next() == true) {
+            movie = iter.get();
+            stdout.printf("processing %s\n", movie.video_file.get_basename());
+            // info_file will be unset if not found or broken
+            if ((movie.info_file == null) || (movie.poster_file == null)) { 
+                if (!get_and_save_info(movie)) {
+                	stdout.printf("%s not found in online database\n", movie.video_file.get_basename());
+                	iter.remove(); 
+                	continue;
+                } // info not found == not a movie file
+            }
+            movie.load_info();
+            //Gdk.threads_enter();  
+            this.gui_controller.add_movie_item(movie);
+            //Gdk.threads_leave();
+		}
+        this.gui_controller.finalise_adding();
+        
     	
     }
     
