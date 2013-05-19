@@ -181,6 +181,7 @@ class GUIController: Object {
     }
     
     private void file_chooser() {
+    
     	// The FileChooserDialog:
 		Gtk.FileChooserDialog chooser = new Gtk.FileChooserDialog (
 				"Select the directory with your movies", this.main_window, Gtk.FileChooserAction.SELECT_FOLDER,
@@ -189,17 +190,10 @@ class GUIController: Object {
 				Gtk.Stock.OPEN,
 				Gtk.ResponseType.ACCEPT);
 
-		// Multiple files can be selected:
+		// Multiple files can not be selected:
 		chooser.select_multiple = false;
-
-		// We are only interested in jpegs:
-		/*
-		Gtk.FileFilter filter = new Gtk.FileFilter ();
-		chooser.set_filter (filter);
-		filter.add_mime_type ("inode/directory");
-		*/
 		
-		//process response
+		// response to controller thread 
 		var response = chooser.run ();
 		if (response == Gtk.ResponseType.ACCEPT) {
 			var file = chooser.get_file();
@@ -247,7 +241,7 @@ class GUIController: Object {
         }
         
         Gdk.threads_enter();
-        var movie_item = create_item_for_movie(movie);
+        var movie_item = new MovieItem(movie, this.play);
         this.movie_item_container.pack_start(movie_item, false, false, 0);
         this.movie_list.add(movie);
         this.main_window.show_all();
@@ -256,69 +250,7 @@ class GUIController: Object {
 		
     }  
     
-    public Gtk.Box create_item_for_movie(Movie movie) {
-    
-        var movie_item = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
-        //
-          var hbox = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 0);
-          //
-            Gtk.Image poster;
-            //
-            var vbox = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
-            //
-              var hbox_title = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 0);
-			  //  
-			    var label_title = new Gtk.Label(null);
-			  //
-			  var hbox_controls = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 5);
-			  //
-			    var play_button = new Gtk.Button.with_label("Play");
-			  //
-			  var hbox_desc = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 0);
-			  //
-			    var label_desc = new Gtk.Label(movie.movie_info.description);
-		      
-        //init image
-        var pixbuf = new Gdk.Pixbuf.from_file_at_size(movie.poster_file.get_path(), 154	, 231);
-        poster = new Gtk.Image.from_pixbuf(pixbuf);
-        
-        //init label
-        label_title.set_markup("<span font-size=\"x-large\" font-weight=\"bold\">" + movie.movie_info.title + "</span>");
-        label_desc.set_line_wrap(true); 
-        label_desc.set_justify(Gtk.Justification.LEFT);
-        label_desc.set_alignment(0.0f, 0.0f);
-        label_desc.ellipsize = Pango.EllipsizeMode.END;
-        
-        // connect play method
-        play_button.clicked.connect(() => {
-        	this.play(movie);
-        });
-        
-        vbox.set_homogeneous(false);
-        hbox.set_homogeneous(false);
-        hbox_desc.set_homogeneous(false);
-        hbox_title.pack_start(label_title, false, false, 0);
-        hbox_desc.pack_start(label_desc, true, true, 0);
-        hbox_controls.pack_start(play_button, false, false, 0);
-        vbox.pack_start(hbox_title, false, false, 10);
-        vbox.pack_start(hbox_controls, false, false, 10);
-        vbox.pack_start(hbox_desc, true, true, 10);
-        
-        hbox.set_homogeneous(false);
-        hbox.pack_start(poster, false, false, 5);
-        hbox.pack_start(vbox, true, true, 20);
-        
-        movie_item.set_homogeneous(false);
-        movie_item.pack_start(hbox, false, false, 5);
-        movie_item.pack_start(new Gtk.Separator(Gtk.Orientation.HORIZONTAL), false, false, 0);
-        
-        movie_item.get_style_context().add_class("movie-item");
-        
-      return movie_item;
-
-    }
-    
-    void play(Movie movie) {
+    public void play(Movie movie) {
     	
         stdout.printf("\n MOVIE NAME: %s\n\n", movie.movie_info.title);
         	
