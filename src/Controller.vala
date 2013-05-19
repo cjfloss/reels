@@ -40,7 +40,7 @@ class Controller {
                 //check file type
                 if ((file_info.get_content_type() == "video/mp4") || (file_info.get_content_type() == "video/x-matroska") || (file_info.get_content_type() == "video/x-msvideo")) {
                     
-                    //iterate through new movie list to check if movie already exists
+                    //iterate through new movie list to check for duplicate by file type
                     var iter = this.movie_list.list_iterator();
                     var dup = false;
                     while (iter.next() == true) {
@@ -92,6 +92,7 @@ class Controller {
     public void load_new_movies(GLib.File dir) {
     	
     	this.rec_load_video_files(dir);
+    	
     	var iter = this.movie_list.list_iterator();
         Movie movie;
         this.gui_controller.prepare_to_add(movie_list.size, false);

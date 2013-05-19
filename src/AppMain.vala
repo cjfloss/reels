@@ -67,6 +67,7 @@ class AppMain: Granite.Application {
 		
 		// loop to check for messages from GUI thread
 		while (true) {
+			GLib.Thread.usleep(500000);
 			var message = app.async_queue.try_pop();
 			if (message != null) {
 				if (message.command == "scandir") {
