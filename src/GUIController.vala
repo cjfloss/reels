@@ -267,9 +267,7 @@ class GUIController: Object {
     		print("PRESENTED\n");
     	
     	});
-<<<<<<< TREE
-=======
-    
+    	
     }
     
     private void on_search_update(string search_text) {
@@ -289,7 +287,6 @@ class GUIController: Object {
     			this.movie_item_container.pack_start(iter.get(), false, false, 0);
     			
     	}
->>>>>>> MERGE-SOURCE
     
     }
     
