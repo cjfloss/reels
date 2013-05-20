@@ -40,9 +40,9 @@ class AppMain: Granite.Application {
 		controller.gui_controller.main_window.show_all();
 				
 		var mainloop_thread = new Thread<bool>("MainThread", () => {
+        	print("mainloop started\n");
         	Gdk.threads_enter();
         	Gtk.main();
-	        stdout.printf("mainloop started\n");
         	Gdk.threads_leave();
         	return true;
         } );
@@ -61,6 +61,8 @@ class AppMain: Granite.Application {
 		if (dir_specified) {
 			controller.load_new_movies(dir);
 		}
+		
+		print("DONE\n");
 		
 		// Init async queue from which dirs to scan for movies is recieved
 		app.async_queue = new GLib.AsyncQueue<AsyncMessage>();

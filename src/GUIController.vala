@@ -3,7 +3,7 @@ class GUIController: Object {
 	
     public GUIController(AppMain app, Controller controller) {
         
-        this.movie_list = new Gee.ArrayList<Movie>(null);
+        this.movie_item_list = new Gee.ArrayList<MovieItem>(null);
         this.appmain = app;
         
         // create window and initial contents
@@ -14,7 +14,7 @@ class GUIController: Object {
         
         this.main_window.show_all();
         
-        stdout.printf("show_all called\n");
+        print("show_all called\n");
         
     }
     
@@ -38,6 +38,8 @@ class GUIController: Object {
     }*/
 	
 	private Gtk.ProgressBar progbar;
+	
+	private Granite.Widgets.SearchBar search_bar;
     
     private Granite.Widgets.AboutDialog about_dialog;
     
@@ -54,7 +56,7 @@ class GUIController: Object {
     
     
     // list to hold all items currently shown
-    private Gee.ArrayList<Movie> movie_list;
+    private Gee.ArrayList<MovieItem> movie_item_list;
     
     // step size of progress bar
     double progbar_step_size;
@@ -84,13 +86,6 @@ class GUIController: Object {
         button.clicked.connect(this.file_chooser);
         toolbar.insert(button, 0);
         
-        // seperator
-        /*
-        var separator = new Gtk.ToolItem();
-        separator.set_expand(true);
-        toolbar.insert(separator, 1);
-        */
-        
         // progress bar
         progbar = new Gtk.ProgressBar();
         var progbar_container_y = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
@@ -103,6 +98,13 @@ class GUIController: Object {
         progbar_toolitem.set_expand(true);
         toolbar.insert(progbar_toolitem, 1);
         progbar.visible = false;
+        
+        // Searchbar
+        this.search_bar = new Granite.Widgets.SearchBar("search movies");
+        var search_bar_toolitem = new Gtk.ToolItem();
+        search_bar_toolitem.add(search_bar);
+        toolbar.insert(search_bar_toolitem, -2);
+        this.search_bar.text_changed_pause.connect(this.on_search_update);
         
         
         
@@ -228,22 +230,12 @@ class GUIController: Object {
     
     public void add_movie_item(Movie movie) {
     
-        stdout.printf("adding %s to GUI\n", movie.movie_info.title);
-        //check for duplicate
-        var iter = this.movie_list.list_iterator();
-        Movie movie_in_list;
-        while (iter.next()) {
-        	movie_in_list = iter.get();
-        	if (movie_in_list.movie_info.id == movie.movie_info.id) {
-        		stdout.printf("%s already in GUI\n", movie.movie_info.title);
-        		return;
-        	}
-        }
+        print("  adding " + movie.movie_info.title + " to GUI\n");
         
         Gdk.threads_enter();
         var movie_item = new MovieItem(movie, this.play);
         this.movie_item_container.pack_start(movie_item, false, false, 0);
-        this.movie_list.add(movie);
+        this.movie_item_list.add(movie_item);
         this.main_window.show_all();
         this.progbar.set_fraction(this.progbar.get_fraction() + this.progbar_step_size);
         Gdk.threads_leave();
@@ -252,7 +244,7 @@ class GUIController: Object {
     
     public void play(Movie movie) {
     	
-        stdout.printf("\n MOVIE NAME: %s\n\n", movie.movie_info.title);
+        print("\n MOVIE NAME: %s\n\n", movie.movie_info.title);
         	
     	string[] child_args = {"totem", movie.video_file.get_path()};
     	
@@ -260,7 +252,7 @@ class GUIController: Object {
     	
     	
     	
-    	stdout.printf("HIDDEN\n");
+    	print("HIDDEN\n");
     	
     	GLib.Pid child_pid;
     	
@@ -272,9 +264,29 @@ class GUIController: Object {
     		
     		this.main_window.present();
     	
-    		stdout.printf("PRESENTED\n");
+    		print("PRESENTED\n");
     	
     	});
+    
+    }
+    
+    private void on_search_update(string search_text) {
+    
+    	this.movie_item_container.@foreach((widget) => {
+    	
+    		this.movie_item_container.remove(widget);
+    		
+    	});
+    	
+    	var iter = this.movie_item_list.list_iterator();
+    	while (iter.next() == true) {
+    	
+    		var regex = new GLib.Regex("\\Q" + search_text + "\\E", GLib.RegexCompileFlags.CASELESS, 0);
+    		GLib.MatchInfo match_info;
+    		if (regex.match(iter.get().movie.movie_info.title, 0, out match_info))
+    			this.movie_item_container.pack_start(iter.get(), false, false, 0);
+    			
+    	}
     
     }
     
