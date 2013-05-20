@@ -1,5 +1,7 @@
 class Controller {
 
+	// Global movie list.
+   	// We assume once a movie makes it to the global movie list, everything about it is perfect.
     private Gee.ArrayList<Movie> movie_list;
     
     private GLib.File config_dir;
@@ -12,7 +14,7 @@ class Controller {
         
         this.config_dir = File.new_for_path(GLib.Environment.get_user_config_dir()).get_child("Reels");
         if (!config_dir.query_exists()) {
-            if (!config_dir.make_directory()) {stdout.printf("Could not create ~/.config/Reels/"); return;}
+            if (!config_dir.make_directory()) {print("Could not create ~/.config/Reels/"); return;}
         }
         
         this.gui_controller = new GUIController(app, this);
@@ -20,27 +22,33 @@ class Controller {
     }
     
     // recursively load video files from directory
-    public void rec_load_video_files(GLib.File dir) {
+    public Gee.ArrayList<Movie> rec_load_video_files(GLib.File dir) {
     
         // list to hold all newly scanned 
-        //var new_movie_list = new Gee.ArrayList<Movie>(null);
-    	if (!dir.query_exists()) return;
+        var new_movie_list = new Gee.ArrayList<Movie>(null);
+        
         var file_enum = dir.enumerate_children("standard::*", GLib.FileQueryInfoFlags.NONE, null);
         GLib.FileInfo file_info;
+        
         while ((file_info = file_enum.next_file()) != null) {
         
             var filename = file_info.get_name();
+            
             if (file_info.get_content_type() == "inode/directory") { //if found dir
-                stdout.printf("Directory found ------> " + filename + "\n");
-                rec_load_video_files(dir.get_child(filename));
+            
+                print("Directory found ------> " + filename + "\n");
+                // get list from this directory and add it to ours
+                new_movie_list.add_all(rec_load_video_files(dir.get_child(filename)));
+                
             } else {
-                stdout.printf("  " + filename + "\n");
-                stdout.printf("   file type : " + file_info.get_content_type() + "\n");
+            
+                print("  " + filename + "\n");
+                print("   file type : " + file_info.get_content_type() + "\n");
                 
                 //check file type
                 if ((file_info.get_content_type() == "video/mp4") || (file_info.get_content_type() == "video/x-matroska") || (file_info.get_content_type() == "video/x-msvideo")) {
                     
-                    //iterate through new movie list to check for duplicate by file type
+                    //iterate through global movie list to check for duplicate by file name
                     var iter = this.movie_list.list_iterator();
                     var dup = false;
                     while (iter.next() == true) {
@@ -49,8 +57,8 @@ class Controller {
                     }
                      
                     if (dup == false) {
-                        this.movie_list.add(new Movie(dir.get_child(filename), null, null));
-                    } else {stdout.printf("FOUND DUPLICATE: " + filename + "\n");}
+                        new_movie_list.add(new Movie(dir.get_child(filename), null, null));
+                    } else {print("FOUND DUPLICATE: " + filename + "\n");}
                     
                 }
                 
@@ -58,12 +66,14 @@ class Controller {
             }
         
         }
+        
+        return new_movie_list;
     
     }
     
-    
+    // (NOW OBSOLETE!! load_new_movies() and load_cached_movies() now so this indipendently)
     // goes through movie_list getting info where nesseccary and sends items to GUIController.
-    // can be used as a refresher function.
+    // can be used as a refresher function. 
     public void process_list() {
     
         var iter = this.movie_list.list_iterator();
@@ -71,11 +81,11 @@ class Controller {
         this.gui_controller.prepare_to_add(movie_list.size, true);
         while (iter.next() == true) {
             movie = iter.get();
-            stdout.printf("processing %s\n", movie.video_file.get_basename());
+            print("processing %s\n", movie.video_file.get_basename());
             // info_file will be unset if not found or broken
             if ((movie.info_file == null) || (movie.poster_file == null)) { 
                 if (!get_and_save_info(movie)) {
-                	stdout.printf("%s not found in online database\n", movie.video_file.get_basename());
+                	print("%s not found in online database\n", movie.video_file.get_basename());
                 	iter.remove(); 
                 	continue;
                 } // info not found == not a movie file
@@ -91,29 +101,52 @@ class Controller {
     
     public void load_new_movies(GLib.File dir) {
     	
-    	this.rec_load_video_files(dir);
+    	if (!dir.query_exists()) return;
     	
-    	var iter = this.movie_list.list_iterator();
+    	// get list of movies under dir
+    	// at this point, these Movie objects hold GLib.File's for their video files
+    	var new_movie_list = this.rec_load_video_files(dir);
+    	
+    	var iter = new_movie_list.list_iterator();
         Movie movie;
+        
         this.gui_controller.prepare_to_add(movie_list.size, false);
+        
         while (iter.next() == true) {
+        
             movie = iter.get();
-            stdout.printf("processing %s\n", movie.video_file.get_basename());
-            // info_file will be unset if not found or broken
+            print("processing " + movie.video_file.get_basename());
+        	
             if ((movie.info_file == null) || (movie.poster_file == null)) { 
                 if (!get_and_save_info(movie)) {
-                	stdout.printf("%s not found in online database\n", movie.video_file.get_basename());
-                	iter.remove(); 
+                	// info not found == not a movie file
+                	print(movie.video_file.get_basename() + " not found in online database\n");
+                	// remove this Movie from our list
+                	iter.remove();
                 	continue;
-                } // info not found == not a movie file
+                } 
             }
+            
             movie.load_info();
-            //Gdk.threads_enter();  
+            
+            // We now have the info for the movie, including title
+            // We use the title to remove any duplicates in the global movie list
+		    var iter_glob = this.movie_list.list_iterator();
+		    Movie movie_glob;
+		    while (iter_glob.next()) {
+		    	movie_glob = iter_glob.get();
+		    	if (movie_glob.movie_info.id == movie.movie_info.id) {
+		    		iter.remove();
+                	continue;
+		    	}
+		    }
+            
             this.gui_controller.add_movie_item(movie);
-            //Gdk.threads_leave();
+            
+            this.movie_list.add(movie);
 		}
+		
         this.gui_controller.finalise_adding();
-        
     
     }
     
@@ -122,7 +155,7 @@ class Controller {
     
         if (!movie.infer_title_and_year()) return false;
         
-        stdout.printf("Getting info for %s\n", movie.video_file.get_basename());
+        print("Getting info for %s\n", movie.video_file.get_basename());
     
         // send search request
         var uri = "http://api.themoviedb.org/3/search/movie?api_key=f6bfd6dfde719ce3a4c710d7258692cf&query=" + movie.search_title + " " /*+ movie.search_year*/ ;
@@ -131,7 +164,7 @@ class Controller {
         message.request_headers.append("Accept", "application/json");
         session.send_message (message);
         string reply = (string) message.response_body.flatten ().data;
-        //stdout.printf("REPLY:\n%s\n\n", reply);
+        //print("REPLY:\n%s\n\n", reply);
         
          // parse response data
         var parser = new Json.Parser ();
@@ -149,7 +182,7 @@ class Controller {
         message.request_headers.append("Accept", "application/json");
         session.send_message (message);
         reply = (string) message.response_body.flatten ().data;
-        //stdout.printf("REPLY:\n%s\n\n", reply);
+        //print("REPLY:\n%s\n\n", reply);
         
         parser = new Json.Parser ();
         parser.load_from_data (reply, -1);
@@ -198,57 +231,63 @@ class Controller {
     public void load_cached_movies() {
     
         // iterate through config_dir
-        var dir = this.config_dir; stdout.printf("config_dir = %s\n", this.config_dir.get_path());
+        var dir = this.config_dir; print("config_dir = %s\n", this.config_dir.get_path());
         var file_enum = dir.enumerate_children("standard::*", GLib.FileQueryInfoFlags.NONE, null);
         FileInfo file_info;
         while ((file_info = file_enum.next_file()) != null) {
         	
         	
-            if (!(file_info.get_content_type() == "inode/directory")) continue;
+            if (!(file_info.get_content_type() == "inode/directory"))
+            	continue;
             var movie_dir = dir.get_child(file_info.get_name()); 
-            stdout.printf("found: %s\n", movie_dir.get_basename());
-            GLib.File pathfile = movie_dir.get_child("path"); //look for path file
-           
-            if (!pathfile.query_exists()) continue; // fuck it if no path file exists 
+            print("found: %s\n", movie_dir.get_basename());
             
+            //look for path file and get path from file
+            GLib.File pathfile = movie_dir.get_child("path");
+            if (!pathfile.query_exists()) 
+            	continue; // fuck it if no path file exists
             string path;
             GLib.FileUtils.get_contents(pathfile.get_path(), out path, null);
+            
+            // look for video file expected at path
             GLib.File video_file = GLib.File.new_for_path(path);
-            if (!(video_file.query_exists())) continue;
+            if (!(video_file.query_exists()))
+            	continue;
+            
+            // look for info file and poster file
             GLib.File infofile;
             GLib.File posterfile = null;
             if ((infofile = movie_dir.get_child("info")).query_exists() && (posterfile = movie_dir.get_child("poster.jpg")).query_exists()) { // if movie info and poster exist
                 this.movie_list.add(new Movie(video_file, infofile, posterfile));// init movie object with info and poster
+                print(" added to global movie list\n");
             }
             else {
-            	this.movie_list.add(new Movie(video_file, null, null));// init movie object without metadata (will be fetched in process_list() as info_file is unset)
+            	continue;
+            	/* TODO:
+            		more thorough checks for cached data
+            		implement retrieving details if cache is broken
+            		implement refreshing movie data once every session
+            	*/
             }
         	
         }
         
-    	stdout.printf("Array size: %d\n", this.movie_list.size);
+    	print("Array size: %d\n", this.movie_list.size);
     	
+    	// We assume once a movie makes it to the global movie list, everything about it is perfect.
+    	
+    	// We iterate over the global list directly, it has just been filled for thee first time
     	var iter = this.movie_list.list_iterator();
         Movie movie;
-        this.gui_controller.prepare_to_add(movie_list.size, true);
-        while (iter.next() == true) {
-            movie = iter.get();
-            stdout.printf("processing %s\n", movie.video_file.get_basename());
-            // info_file will be unset if not found or broken
-            if ((movie.info_file == null) || (movie.poster_file == null)) { 
-                if (!get_and_save_info(movie)) {
-                	stdout.printf("%s not found in online database\n", movie.video_file.get_basename());
-                	iter.remove(); 
-                	continue;
-                } // info not found == not a movie file
-            }
-            movie.load_info();
-            //Gdk.threads_enter();  
-            this.gui_controller.add_movie_item(movie);
-            //Gdk.threads_leave();
-		}
-        this.gui_controller.finalise_adding();
         
+        this.gui_controller.prepare_to_add(movie_list.size, true);
+        
+        while (iter.next() == true) {
+        	iter.get().load_info();
+            this.gui_controller.add_movie_item(iter.get());
+		}
+		
+        this.gui_controller.finalise_adding();
     	
     }
     
