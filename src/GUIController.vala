@@ -14,7 +14,7 @@ class GUIController: Object {
         
         this.main_window.show_all();
         
-        stdout.printf("show_all called\n");
+        print("show_all called\n");
         
     }
     
@@ -228,17 +228,7 @@ class GUIController: Object {
     
     public void add_movie_item(Movie movie) {
     
-        stdout.printf("adding %s to GUI\n", movie.movie_info.title);
-        //check for duplicate
-        var iter = this.movie_list.list_iterator();
-        Movie movie_in_list;
-        while (iter.next()) {
-        	movie_in_list = iter.get();
-        	if (movie_in_list.movie_info.id == movie.movie_info.id) {
-        		stdout.printf("%s already in GUI\n", movie.movie_info.title);
-        		return;
-        	}
-        }
+        print("  adding " + movie.movie_info.title + " to GUI\n");
         
         Gdk.threads_enter();
         var movie_item = new MovieItem(movie, this.play);
@@ -252,7 +242,7 @@ class GUIController: Object {
     
     public void play(Movie movie) {
     	
-        stdout.printf("\n MOVIE NAME: %s\n\n", movie.movie_info.title);
+        print("\n MOVIE NAME: %s\n\n", movie.movie_info.title);
         	
     	string[] child_args = {"totem", movie.video_file.get_path()};
     	
@@ -260,7 +250,7 @@ class GUIController: Object {
     	
     	
     	
-    	stdout.printf("HIDDEN\n");
+    	print("HIDDEN\n");
     	
     	GLib.Pid child_pid;
     	
@@ -272,7 +262,7 @@ class GUIController: Object {
     		
     		this.main_window.present();
     	
-    		stdout.printf("PRESENTED\n");
+    		print("PRESENTED\n");
     	
     	});
     
