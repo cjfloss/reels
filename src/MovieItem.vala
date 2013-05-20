@@ -1,7 +1,6 @@
 class MovieItem : Gtk.Box {
 
 	public Movie movie {get; set construct;}
-	public string title {get; set construct;}
 	private play_func play;
 
 	public MovieItem(Movie _movie, play_func _play) {
@@ -9,7 +8,6 @@ class MovieItem : Gtk.Box {
 		Object(orientation : Gtk.Orientation.VERTICAL);
 		
 		this.movie = _movie;
-		this.title = movie.movie_info.title;
 		this.play = _play;
 		
 		// GUI elements shown in tree heirarchy
