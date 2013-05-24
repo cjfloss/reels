@@ -4,10 +4,14 @@ class MovieInfo {
 
     public string title;
     
-    public string year;
+    public string release_date;
     
     public string description;
     
     public string tagline;
+    
+    public string[] genres;
+    
+    public string poster_path;
 
 }
