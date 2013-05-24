@@ -71,34 +71,6 @@ class Controller {
     
     }
     
-    // (NOW OBSOLETE!! load_new_movies() and load_cached_movies() now so this indipendently)
-    // goes through movie_list getting info where nesseccary and sends items to GUIController.
-    // can be used as a refresher function. 
-    public void process_list() {
-    
-        var iter = this.movie_list.list_iterator();
-        Movie movie;
-        this.gui_controller.prepare_to_add(movie_list.size, true);
-        while (iter.next() == true) {
-            movie = iter.get();
-            print("processing %s\n", movie.video_file.get_basename());
-            // info_file will be unset if not found or broken
-            if ((movie.info_file == null) || (movie.poster_file == null)) { 
-                if (!get_and_save_info(movie)) {
-                	print("%s not found in online database\n", movie.video_file.get_basename());
-                	iter.remove(); 
-                	continue;
-                } // info not found == not a movie file
-            }
-            movie.load_info();
-            //Gdk.threads_enter();  
-            this.gui_controller.add_movie_item(movie);
-            //Gdk.threads_leave();
-		}
-        this.gui_controller.finalise_adding();
-        
-    }
-    
     public void load_new_movies(GLib.File dir) {
     	
     	if (!dir.query_exists()) return;
@@ -127,7 +99,7 @@ class Controller {
                 } 
             }
             
-            movie.load_info();
+            //movie.load_info();
             
             // We now have the info for the movie, including title
             // We use the title to remove any duplicates in the global movie list
@@ -154,8 +126,51 @@ class Controller {
     
     }
     
-    // looks up info from TMDb for movie and returns it with and info_file and poster_file
+    
     private bool get_and_save_info(Movie movie) {
+    
+    	if (!movie.infer_title_and_year()) return false;
+        
+        print("----Getting info for %s\n", movie.video_file.get_basename());
+        
+        // Initialise TMDb object
+        var tmdb = new TMDb.TMDb("f6bfd6dfde719ce3a4c710d7258692cf");
+        
+        // Search for movie
+        if (!tmdb.search_movies(movie.search_title))
+        	return false;
+        
+        MovieInfo movie_info;
+        string json_data;
+        
+        // Query detailed info for first movie in search results
+        tmdb.get_info_and_json_for_search_result(1, out movie_info, out json_data);
+        
+        // Init files for caching data
+        var movie_dir = this.config_dir.get_child(movie_info.title);
+        if (!movie_dir.query_exists()) movie_dir.make_directory();
+        GLib.File path_file = movie_dir.get_child("path");
+        movie.info_file = movie_dir.get_child("info");
+        movie.poster_file = movie_dir.get_child("poster.jpg");
+        
+        // Fill info file with movie info data
+        GLib.FileUtils.set_contents(movie.info_file.get_path(), json_data);
+        
+        movie.movie_info = movie_info;
+        
+        // Make local copy of poster image file
+        tmdb.get_image("w154", movie_info.poster_path, movie.poster_file);
+        
+        // Save video file path to
+        GLib.FileUtils.set_contents(path_file.get_path(), movie.video_file.get_path());
+        
+        return true;
+        
+    }
+    
+    
+    // looks up info from TMDb for movie and returns it with and info_file and poster_file
+    private bool get_and_save_info_old(Movie movie) {
     
         if (!movie.infer_title_and_year()) return false;
         
@@ -223,7 +238,7 @@ class Controller {
     	
     	movie.poster_file = local_image_file;
     	
-    	//save file path to video file
+    	//save path to video file
     	File path = movie_dir.get_child("path");
     	path.replace_contents(movie.video_file.get_path().data, null, false, FileCreateFlags.NONE, null, null);
     	
