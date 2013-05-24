@@ -110,12 +110,12 @@ class Controller {
     	var iter = new_movie_list.list_iterator();
         Movie movie;
         
-        this.gui_controller.prepare_to_add(movie_list.size, false);
+        this.gui_controller.prepare_to_add(new_movie_list.size, false);
         
         while (iter.next() == true) {
         
             movie = iter.get();
-            print("processing " + movie.video_file.get_basename());
+            print("processing " + movie.video_file.get_basename() + "\n");
         	
             if ((movie.info_file == null) || (movie.poster_file == null)) { 
                 if (!get_and_save_info(movie)) {
@@ -132,14 +132,18 @@ class Controller {
             // We now have the info for the movie, including title
             // We use the title to remove any duplicates in the global movie list
 		    var iter_glob = this.movie_list.list_iterator();
+		    bool dupe = false;
 		    Movie movie_glob;
 		    while (iter_glob.next()) {
 		    	movie_glob = iter_glob.get();
 		    	if (movie_glob.movie_info.id == movie.movie_info.id) {
 		    		iter.remove();
-                	continue;
+		    		dupe = true;
+                	break;
 		    	}
 		    }
+		    if (dupe)
+		    	continue;
             
             this.gui_controller.add_movie_item(movie);
             
@@ -155,7 +159,7 @@ class Controller {
     
         if (!movie.infer_title_and_year()) return false;
         
-        print("Getting info for %s\n", movie.video_file.get_basename());
+        print("----Getting info for %s\n", movie.video_file.get_basename());
     
         // send search request
         var uri = "http://api.themoviedb.org/3/search/movie?api_key=f6bfd6dfde719ce3a4c710d7258692cf&query=" + movie.search_title + " " /*+ movie.search_year*/ ;
@@ -240,7 +244,7 @@ class Controller {
             if (!(file_info.get_content_type() == "inode/directory"))
             	continue;
             var movie_dir = dir.get_child(file_info.get_name()); 
-            print("found: %s\n", movie_dir.get_basename());
+            print("found in cache: %s\n", movie_dir.get_basename());
             
             //look for path file and get path from file
             GLib.File pathfile = movie_dir.get_child("path");
@@ -249,19 +253,20 @@ class Controller {
             string path;
             GLib.FileUtils.get_contents(pathfile.get_path(), out path, null);
             
+            
             // look for video file expected at path
             GLib.File video_file = GLib.File.new_for_path(path);
-            if (!(video_file.query_exists()))
-            	continue;
+            //if (!(video_file.query_exists()))
+            	//continue;
+            
             
             // look for info file and poster file
             GLib.File infofile;
             GLib.File posterfile = null;
-            if ((infofile = movie_dir.get_child("info")).query_exists() && (posterfile = movie_dir.get_child("poster.jpg")).query_exists()) { // if movie info and poster exist
-                this.movie_list.add(new Movie(video_file, infofile, posterfile));// init movie object with info and poster
-                print(" added to global movie list\n");
-            }
-            else {
+            if ((infofile = movie_dir.get_child("info")).query_exists() && (posterfile = movie_dir.get_child("poster.jpg")).query_exists()) {
+                // init movie object with info and poster
+                this.movie_list.add(new Movie(video_file, infofile, posterfile));
+            } else {
             	continue;
             	/* TODO:
             		more thorough checks for cached data
@@ -271,20 +276,22 @@ class Controller {
             }
         	
         }
-        
-    	print("Array size: %d\n", this.movie_list.size);
-    	
+
     	// We assume once a movie makes it to the global movie list, everything about it is perfect.
     	
     	// We iterate over the global list directly, it has just been filled for thee first time
     	var iter = this.movie_list.list_iterator();
         Movie movie;
         
-        this.gui_controller.prepare_to_add(movie_list.size, true);
+        // Init progress bar and make movie objects insensitive.
+        // This is done because scrolling becomes very laggy when new movie items are being constructed.
+        this.gui_controller.prepare_to_add(this.movie_list.size, true);
         
         while (iter.next() == true) {
-        	iter.get().load_info();
-            this.gui_controller.add_movie_item(iter.get());
+        	movie = iter.get();
+        	print("Processing " + movie.video_file.get_basename() + "\n");
+        	movie.load_info();
+            this.gui_controller.add_movie_item(movie);
 		}
 		
         this.gui_controller.finalise_adding();
