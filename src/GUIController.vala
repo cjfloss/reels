@@ -59,7 +59,7 @@ class GUIController: Object {
     private Gee.ArrayList<MovieItem> movie_item_list;
     
     // step size of progress bar
-    double progbar_step_size;
+    private double progbar_step_size;
     
     public void show_window() {
     	this.main_window.show_all();
@@ -195,7 +195,7 @@ class GUIController: Object {
 		// Multiple files can not be selected:
 		chooser.select_multiple = false;
 		
-		// response to controller thread 
+		// get response and send command to controller thread 
 		var response = chooser.run ();
 		if (response == Gtk.ResponseType.ACCEPT) {
 			var file = chooser.get_file();
@@ -224,22 +224,23 @@ class GUIController: Object {
         this.progbar.visible = false;
         this.scrolled.sensitive = true;
         this.progbar.set_fraction(0.0);
+        this.movie_item_container.show_all();
         Gdk.threads_leave();
         return;
     }
     
     public void add_movie_item(Movie movie) {
     
-        print("  adding " + movie.movie_info.title + " to GUI\n");
+        print("----adding to GUI\n");
         
         Gdk.threads_enter();
         var movie_item = new MovieItem(movie, this.play);
         this.movie_item_container.pack_start(movie_item, false, false, 0);
         this.movie_item_list.add(movie_item);
-        this.main_window.show_all();
+        //movie_item.show_all();
         this.progbar.set_fraction(this.progbar.get_fraction() + this.progbar_step_size);
         Gdk.threads_leave();
-		
+        
     }  
     
     public void play(Movie movie) {

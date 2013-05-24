@@ -63,6 +63,7 @@ class Movie {
     // load movie info from file specified by info_file
     public void load_info() {
     
+    	print("----loading info\n");
         var parser = new Json.Parser();
         parser.load_from_file(this.info_file.get_path());
         var root =  parser.get_root().get_object();
