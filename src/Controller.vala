@@ -168,7 +168,7 @@ class Controller {
         
     }
     
-    
+    // OUTDATED!!! Now this functianality has been moved to TMDb class.
     // looks up info from TMDb for movie and returns it with and info_file and poster_file
     private bool get_and_save_info_old(Movie movie) {
     

@@ -71,6 +71,12 @@ class Movie {
         this.movie_info.title = root.get_string_member("title");
         this.movie_info.description = root.get_string_member("description");
         this.movie_info.tagline = root.get_string_member("tagline");
+        
+        var genres = root.get_array_member("genres");
+        this.movie_info.genres = new string[genres.get_length()];
+        for (uint iii = 0; iii < genres.get_length(); iii++) {
+        	this.movie_info.genres[iii] = genres.get_element(iii).get_string();
+        }
         return;
     
     }
