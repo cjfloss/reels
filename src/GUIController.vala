@@ -48,6 +48,10 @@ class GUIController: Object {
         set {app_menu = value;}
     }*/
     
+    private Granite.Widgets.SourceList source_list;
+    
+    private Granite.Widgets.SourceList.ExpandableItem source_category_genres;
+    
     private Gtk.ScrolledWindow scrolled;
     
     private Gtk.Box movie_item_container;
@@ -57,6 +61,8 @@ class GUIController: Object {
     
     // list to hold all items currently shown
     private Gee.ArrayList<MovieItem> movie_item_list;
+    
+    private string[] genres;
     
     // step size of progress bar
     private double progbar_step_size;
@@ -129,48 +135,49 @@ class GUIController: Object {
         vbox.pack_start(toolbar, false, false, 0);
         
         //var frame = new Gtk.Frame(null);
-        scrolled = new Gtk.ScrolledWindow(null, null);
-        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC);
-        scrolled.name = "content_area";
+        this.scrolled = new Gtk.ScrolledWindow(null, null);
+        this.scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC);
+        this.scrolled.name = "content_area";
         this.movie_item_container = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
         
         //frame.add(scrolled);
         this.movie_item_container.set_homogeneous(false);
-        scrolled.add_with_viewport(movie_item_container);
+        this.scrolled.add_with_viewport(movie_item_container);
         
         // SourceList
-        var source_list = new Granite.Widgets.SourceList();
+        this.source_list = new Granite.Widgets.SourceList();
         var source_all = new Granite.Widgets.SourceList.Item("All");
         var source_watched = new Granite.Widgets.SourceList.Item("Watched");
         var source_unwatched = new Granite.Widgets.SourceList.Item("Unwatched");
-        var source_category_genres = new Granite.Widgets.SourceList.ExpandableItem("Genres");
+        this.source_category_genres = new Granite.Widgets.SourceList.ExpandableItem("Genres");
         var source_genres_all = new Granite.Widgets.SourceList.Item("All");
-        var source_genres_action = new Granite.Widgets.SourceList.Item("Action");
-        var source_genres_comedy = new Granite.Widgets.SourceList.Item("Comedy");
-        var source_genres_drama = new Granite.Widgets.SourceList.Item("Drama");
-        var source_genres_horror = new Granite.Widgets.SourceList.Item("Horror");
+        //var source_genres_action = new Granite.Widgets.SourceList.Item("Action");
+        //var source_genres_comedy = new Granite.Widgets.SourceList.Item("Comedy");
+        //var source_genres_drama = new Granite.Widgets.SourceList.Item("Drama");
+        //var source_genres_horror = new Granite.Widgets.SourceList.Item("Horror");
         source_category_genres.add(source_genres_all);
-        source_category_genres.add(source_genres_action);
-        source_category_genres.add(source_genres_comedy);
-        source_category_genres.add(source_genres_drama);
-        source_category_genres.add(source_genres_horror);
-        var source_list_root = source_list.root;
+        //source_category_genres.add(source_genres_action);
+        //source_category_genres.add(source_genres_comedy);
+        //source_category_genres.add(source_genres_drama);
+        //source_category_genres.add(source_genres_horror);
+        var source_list_root = this.source_list.root;
         source_list_root.add(source_all);
         source_list_root.add(source_watched);
         source_list_root.add(source_unwatched);
         source_list_root.add(source_category_genres);
+        this.source_list.item_selected.connect(this.on_source_list_item_selected);
         
 	    var pane = new Granite.Widgets.ThinPaned();
-		pane.pack1(source_list, true, false);
-		pane.pack2(scrolled, true, false);
-        pane.set_position(100);
+		pane.pack1(this.source_list, true, false);
+		pane.pack2(this.scrolled, true, false);
+        pane.set_position(130);
         
         vbox.pack_start(pane, true, true, 0);
         
         main_window.add(vbox);
         
         // Gtk theming
-        source_list.get_style_context().add_class(Gtk.STYLE_CLASS_SIDEBAR);
+        this.source_list.get_style_context().add_class(Gtk.STYLE_CLASS_SIDEBAR);
         toolbar.get_style_context().add_class(Gtk.STYLE_CLASS_PRIMARY_TOOLBAR);
         var css_provider = new Gtk.CssProvider();
         this.movie_item_container.name = "movie_item_container";
@@ -234,14 +241,39 @@ class GUIController: Object {
         print("----adding to GUI\n");
         
         Gdk.threads_enter();
+        
         var movie_item = new MovieItem(movie, this.play);
         this.movie_item_container.pack_start(movie_item, false, false, 0);
         this.movie_item_list.add(movie_item);
         //movie_item.show_all();
         this.progbar.set_fraction(this.progbar.get_fraction() + this.progbar_step_size);
+        
+        this.update_genres_list(movie);
+        
+        
         Gdk.threads_leave();
         
-    }  
+    }
+    
+    private void update_genres_list(Movie movie) {
+    
+    	for (uint iii = 0; iii < (movie.movie_info.genres.length); iii++) {
+        	print("--%s\n", movie.movie_info.genres[iii]);
+        	for (uint jjj = 0; jjj < (this.genres.length); jjj++) {
+        		
+		    	if (movie.movie_info.genres[iii] == this.genres[jjj])
+		    		return;
+        	}
+        	
+        	var source_genre = new Granite.Widgets.SourceList.Item(movie.movie_info.genres[iii]);
+			this.source_category_genres.add(source_genre);
+			this.genres += movie.movie_info.genres[iii];
+			
+        }
+        
+		return;
+    
+    }
     
     public void play(Movie movie) {
     	
@@ -286,6 +318,27 @@ class GUIController: Object {
     		GLib.MatchInfo match_info;
     		if (regex.match(iter.get().movie.movie_info.title, 0, out match_info))
     			this.movie_item_container.pack_start(iter.get(), false, false, 0);
+    			
+    	}
+    
+    }
+    
+    private void on_source_list_item_selected(Granite.Widgets.SourceList.Item? item) {
+    
+    	this.movie_item_container.@foreach((widget) => {
+    		this.movie_item_container.remove(widget);
+    	});
+    	
+    	var iter = this.movie_item_list.list_iterator();
+    	while (iter.next() == true) {
+    	
+    		if ((item.name in iter.get().movie.movie_info.genres) || (item.name == "All"))
+    			this.movie_item_container.pack_start(iter.get(), false, false, 0);
+    	
+    		/*for (uint iii = 0; iii < this.genres.length; iii++) {
+    			if (this.genres[iii] in iter.get().movie.movie_info.genres)
+    				this.movie_item_container.pack_start(iter.get(), false, false, 0);
+    		}*/
     			
     	}
     

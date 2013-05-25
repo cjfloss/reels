@@ -72,6 +72,12 @@ namespace TMDb {
 		    
 		    movie_info = new MovieInfo();
 		    
+		    var genres = root_object.get_array_member("genres");
+		    movie_info.genres = new string[genres.get_length()];
+		    for (uint index = 0; index < genres.get_length(); index++) {
+		    	movie_info.genres[index] = genres.get_object_element(index).get_string_member("name");
+		    }
+		    
 		    movie_info.id = id;
 		    movie_info.title = root_object.get_string_member("title");
 		    movie_info.description = root_object.get_string_member("overview");
@@ -98,8 +104,15 @@ namespace TMDb {
 		    builder.add_string_value(movie_info.description);
 		    builder.set_member_name("tagline");
 		    builder.add_string_value(movie_info.tagline);
+		    builder.set_member_name("genres");
+		    builder.begin_array();
+		    for (uint index = 0; index < movie_info.genres.length; index++) {
+				builder.add_string_value(movie_info.genres[index]);
+		    }
+		    builder.end_array();
 		    builder.end_object();
 		    var gen = new Json.Generator();
+		    gen.set_pretty(true);
 		    gen.set_root(builder.get_root());
 		    size_t size;
 		    json_movie_info = gen.to_data(out size);
