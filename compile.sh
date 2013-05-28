@@ -18,6 +18,9 @@ valac -g --disable-warnings --target-glib=2.32 --thread \
 	./src/MovieItem.vala \
 	./src/AsyncMessage.vala \
 	./src/MovieInfo.vala \
-	./src/TMDb.vala \
+	./src/TMDb/TMDb.vala \
+	./src/TMDb/MovieInfo.vala \
+	./src/TMDb/Actor.vala \
+	./src/TMDb/CrewMember.vala \
 \
 -o ./build/reels

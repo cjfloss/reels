@@ -1,4 +1,6 @@
-class MovieInfo {
+namespace TMDb {
+
+	class MovieInfo {
 
 		public int64 id;
 
@@ -13,9 +15,7 @@ class MovieInfo {
 		public string[] genres;
 		
 		public string poster_path;
-		
-		public TMDb.Actor[] cast;
-		
-		public TMDb.CrewMember[] crew;
+
+	}
 
 }
