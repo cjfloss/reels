@@ -182,9 +182,14 @@ class GUIController: Object {
         var css_provider = new Gtk.CssProvider();
         this.movie_item_container.name = "movie_item_container";
         css_provider.load_from_data("""
-        	#content_area > GtkViewport, #movie_item_container {background-color: #ffffff;}
+        	#content_area > GtkViewport, #movie_item_container, .control_button:active *, .control_buttons:hover *, .control_button * {background-color: #ffffff;}
+        	.control_button {
+        		border-radius: 10px;
+        		background: #ffffff;
+        		border-style: none;
+        	}
         """, -1);
-        (new Gtk.StyleContext()).add_provider_for_screen(this.main_window.get_screen(), css_provider, Gtk.STYLE_PROVIDER_PRIORITY_USER);
+        (new Gtk.StyleContext()).add_provider_for_screen(this.main_window.get_screen(), css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
         
     
     }

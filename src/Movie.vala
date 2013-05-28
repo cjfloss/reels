@@ -80,5 +80,68 @@ class Movie {
         return;
     
     }
+    
+    public bool save_info() {
+    
+    	var builder = new Json.Builder();
+	    builder.begin_object();
+	    builder.set_member_name("id");
+	    builder.add_int_value(this.movie_info.id);
+	    builder.set_member_name("title");
+	    builder.add_string_value(this.movie_info.title);
+	    builder.set_member_name("description");
+	    builder.add_string_value(this.movie_info.description);
+	    builder.set_member_name("tagline");
+	    builder.add_string_value(this.movie_info.tagline);
+	    builder.set_member_name("genres");
+	    builder.begin_array();
+	    for (uint index = 0; index < this.movie_info.genres.length; index++) {
+			builder.add_string_value(movie_info.genres[index]);
+	    }
+	    builder.end_array();
+	    builder.set_member_name("cast");
+	    builder.begin_array();
+	    for (uint index = 0; index < this.movie_info.cast.length; index++) {
+			builder.begin_object();
+			builder.set_member_name("id");
+			builder.add_int_value(this.movie_info.cast[index].id);
+			builder.set_member_name("name");
+			builder.add_string_value(this.movie_info.cast[index].name);
+			builder.set_member_name("character");
+			builder.add_string_value(this.movie_info.cast[index].character);
+			builder.set_member_name("order");
+			builder.add_int_value(this.movie_info.cast[index].order);
+			builder.set_member_name("profile_path");
+			builder.add_string_value(this.movie_info.cast[index].profile_path);
+			builder.end_object();
+	    }
+	    builder.end_array();
+	    builder.set_member_name("crew");
+	    builder.begin_array();
+	    for (uint index = 0; index < this.movie_info.crew.length; index++) {
+			builder.begin_object();
+			builder.set_member_name("id");
+			builder.add_int_value(this.movie_info.crew[index].id);
+			builder.set_member_name("name");
+			builder.add_string_value(this.movie_info.crew[index].name);
+			builder.set_member_name("department");
+			builder.add_string_value(this.movie_info.crew[index].department);
+			builder.set_member_name("job");
+			builder.add_string_value(this.movie_info.crew[index].job);
+			builder.set_member_name("profile_path");
+			builder.add_string_value(this.movie_info.crew[index].profile_path);
+			builder.end_object();
+	    }
+	    builder.end_array();
+	    builder.end_object();
+	    var gen = new Json.Generator();
+	    gen.set_pretty(true);
+	    gen.set_root(builder.get_root());
+	    if (gen.to_file(this.info_file.get_path()))
+	    	return true;
+	    else
+	    	return false;
+    
+    }
 
 }

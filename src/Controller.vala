@@ -140,26 +140,44 @@ class Controller {
         if (!tmdb.search_movies(movie.search_title))
         	return false;
         
-        MovieInfo movie_info;
-        string json_data;
+        TMDb.MovieInfo tmdb_movie_info;
+        TMDb.Actor[] cast;
+        TMDb.CrewMember[] crew;
         
         // Query detailed info for first movie in search results
-        tmdb.get_info_and_json_for_search_result(1, out movie_info, out json_data);
+        if (!tmdb.get_info_for_search_result(1, out tmdb_movie_info))
+        	return false;
+        
+        print(tmdb_movie_info.id.to_string() + "\n");
+        
+        movie.movie_info.id = tmdb_movie_info.id;
+        movie.movie_info.title = tmdb_movie_info.title;
+        movie.movie_info.release_date = tmdb_movie_info.release_date;
+        movie.movie_info.description = tmdb_movie_info.description;
+        movie.movie_info.tagline = tmdb_movie_info.tagline;
+        movie.movie_info.genres = tmdb_movie_info.genres;
+        movie.movie_info.poster_path = tmdb_movie_info.poster_path;
+        
+        tmdb.get_cast_and_crew(tmdb_movie_info.id, out cast, out crew);
+        
+        movie.movie_info.cast= cast;
+        movie.movie_info.crew = crew;
         
         // Init files for caching data
-        var movie_dir = this.config_dir.get_child(movie_info.title);
+        var movie_dir = this.config_dir.get_child(movie.movie_info.title);
         if (!movie_dir.query_exists()) movie_dir.make_directory();
         GLib.File path_file = movie_dir.get_child("path");
         movie.info_file = movie_dir.get_child("info");
         movie.poster_file = movie_dir.get_child("poster.jpg");
         
-        // Fill info file with movie info data
-        GLib.FileUtils.set_contents(movie.info_file.get_path(), json_data);
+        // save info to cache
+        movie.save_info();
         
-        movie.movie_info = movie_info;
+        // Fill info file with movie info data
+        //GLib.FileUtils.set_contents(movie.info_file.get_path(), json_data);
         
         // Make local copy of poster image file
-        tmdb.get_image("w154", movie_info.poster_path, movie.poster_file);
+        tmdb.get_image("w154", movie.movie_info.poster_path, movie.poster_file);
         
         // Save video file path to
         GLib.FileUtils.set_contents(path_file.get_path(), movie.video_file.get_path());
@@ -271,8 +289,8 @@ class Controller {
             
             // look for video file expected at path
             GLib.File video_file = GLib.File.new_for_path(path);
-            //if (!(video_file.query_exists()))
-            	//continue;
+            if (!(video_file.query_exists()))
+            	continue;
             
             
             // look for info file and poster file
