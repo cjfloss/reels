@@ -12,7 +12,7 @@ class GUIController: Object {
         //attach main window to application
         //this.main_window.set_application(app);
         
-        this.main_window.show_all();
+        this.show_window();
         
         print("show_all called\n");
         
@@ -43,7 +43,7 @@ class GUIController: Object {
     
     private Granite.Widgets.AboutDialog about_dialog;
     
-    private Granite.Widgets.AppMenu app_menu; /*{
+    private Granite.Widgets.ToolButtonWithMenu app_menu; /*{
         get {return app_menu;}
         set {app_menu = value;}
     }*/
@@ -69,7 +69,15 @@ class GUIController: Object {
     
     public void show_window() {
     	this.main_window.show_all();
+    	//main_window.get_window ().set_decorations (Gdk.WMDecoration.BORDER);
     	return;
+    }
+    
+    private void quit() {
+    
+    	this.appmain.async_queue.push(new AsyncMessage("exit", null));
+        Gtk.main_quit();
+    
     }
     
     public void init_base_ui() {
@@ -77,18 +85,27 @@ class GUIController: Object {
         main_window = new Gtk.Window();
         main_window.set_default_size(1200, 600);
         main_window.set_title("Reels");
+        //main_window.set_decorated(false);
         
-        main_window.destroy.connect(() => {
-        	this.appmain.async_queue.push(new AsyncMessage("exit", null));
-        	Gtk.main_quit();
-        });
+        
+        main_window.destroy.connect(this.quit);
         main_window.set_icon_name("totem");
+        
         
         // init main toolbar
         toolbar = new Gtk.Toolbar();
         
+        // close button
+        /*
+        var button_close = new Gtk.ToolButton(null, null);
+        button_close.set_icon_name("window-close-symbolic");
+        button_close.clicked.connect(this.quit);
+        toolbar.insert(button_close, 0);
+        */
+        
         // load movies button
-        var button = new Gtk.ToolButton.from_stock(Gtk.Stock.OPEN);
+        var button = new Gtk.ToolButton(null, null);
+        button.set_icon_name("list-add-symbolic");
         button.clicked.connect(this.file_chooser);
         toolbar.insert(button, 0);
         
@@ -128,7 +145,9 @@ class GUIController: Object {
 		    this.about_dialog.show_all();
         });
         menu.append(about_item);
-        app_menu = new Granite.Widgets.AppMenu(menu);
+        var app_menu_image = new Gtk.Image.from_icon_name("document-properties-symbolic", Gtk.IconSize.LARGE_TOOLBAR);
+        app_menu = new Granite.Widgets.ToolButtonWithMenu(app_menu_image, "", menu);
+        //app_menu.set_icon_name("document-properties-symbolic");
         toolbar.insert(app_menu, -1);
         
         var vbox = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
@@ -301,6 +320,8 @@ class GUIController: Object {
     		GLib.Process.close_pid(child_pid);
     		
     		this.main_window.present();
+    		
+    		main_window.get_window ().set_decorations (Gdk.WMDecoration.BORDER);
     	
     		print("PRESENTED\n");
     	
