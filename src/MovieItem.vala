@@ -19,13 +19,14 @@ class MovieItem : Gtk.Box {
 			  var hbox_desc = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 0);
 			    var label_desc = new Gtk.Label(null);
 			var vbox_controls = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
-			  var play_button = new Gtk.Button();
-			  var info_button = new Gtk.Button();
+			  var vbox_controls_inner = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
+			    var play_button = new Gtk.Button();
+			    var info_button = new Gtk.Button();
 		
 		// set up play button TODO: is there a simpler way of setting the icon?	  
 		
 		var pixbuf = play_button.render_icon_pixbuf(Gtk.Stock.MEDIA_PLAY, (Gtk.IconSize.INVALID) - 1);
-		var play_image = new Gtk.Image.from_icon_name("media-playback-start", (Gtk.IconSize.INVALID) - 1);
+		var play_image = new Gtk.Image.from_icon_name("media-playback-start", Gtk.IconSize.LARGE_TOOLBAR);
 		play_button.set_image(play_image);
 		play_button.get_style_context().add_class("control_button");
 		play_button.set_focus_on_click(false);
@@ -43,7 +44,7 @@ class MovieItem : Gtk.Box {
         iconfac.add_default();
 		pixbuf = info_button.render_icon_pixbuf("help-info-symbolic", (Gtk.IconSize.INVALID) - 1);
 		var info_image = new Gtk.Image.from_pixbuf(pixbuf);*/
-		var info_image = new Gtk.Image.from_icon_name("help-info-symbolic", (Gtk.IconSize.INVALID) - 1);
+		var info_image = new Gtk.Image.from_icon_name("help-info-symbolic", Gtk.IconSize.LARGE_TOOLBAR);
 		info_button.set_image(info_image);
 		info_button.get_style_context().add_class("control_button");
 		info_button.set_focus_on_click(false);
@@ -66,8 +67,9 @@ class MovieItem : Gtk.Box {
         hbox_title.pack_start(label_title, false, false, 0);
         hbox_desc.pack_start(label_desc, true, true, 10);
         vbox_controls.set_homogeneous(false);
-        vbox_controls.pack_start(play_button, false, false, 5);
-        vbox_controls.pack_start(info_button, false, false, 5);
+        vbox_controls_inner.pack_start(play_button, false, false, 5);
+        vbox_controls_inner.pack_start(info_button, false, false, 5);
+        vbox_controls.pack_start(vbox_controls_inner, true, false, 0);
         vbox.pack_start(hbox_title, false, false, 10);
         //vbox.pack_start(hbox_controls, false, false, 10);
         vbox.pack_start(hbox_desc, true, true, 10);

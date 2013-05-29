@@ -89,8 +89,6 @@ namespace TMDb {
 		    movie_info.tagline = root_object.get_string_member("tagline");
 		    movie_info.poster_path = root_object.get_string_member("poster_path");
 		    
-		    print(movie_info.title);
-		    
 		    return true;
 		   
 		}

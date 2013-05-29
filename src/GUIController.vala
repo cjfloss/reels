@@ -136,6 +136,7 @@ class GUIController: Object {
         about_item.activate.connect(() => {
         	// About dialog
 		    this.about_dialog = new Granite.Widgets.AboutDialog();
+		    this.about_dialog.program_name = this.appmain.program_name;
 		    this.about_dialog.authors = this.appmain.authors;
 		    this.about_dialog.comments = this.appmain.comments;
 		    this.about_dialog.bug = this.appmain.bug_link;
@@ -321,8 +322,6 @@ class GUIController: Object {
     		
     		this.main_window.present();
     		
-    		main_window.get_window ().set_decorations (Gdk.WMDecoration.BORDER);
-    	
     		print("PRESENTED\n");
     	
     	});

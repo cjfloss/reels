@@ -38,7 +38,7 @@ class Controller {
             
                 print("Directory found ------> " + filename + "\n");
                 // get list from this directory and add it to ours
-                new_movie_list.add_all(rec_load_video_files(dir.get_child(filename)));
+                new_movie_list.add_all( rec_load_video_files( dir.get_child(filename) ) );
                 
             } else {
             
@@ -46,22 +46,26 @@ class Controller {
                 print("   file type : " + file_info.get_content_type() + "\n");
                 
                 //check file type
-                if ((file_info.get_content_type() == "video/mp4") || (file_info.get_content_type() == "video/x-matroska") || (file_info.get_content_type() == "video/x-msvideo")) {
+                if ( (file_info.get_content_type() == "video/mp4") 
+                	|| (file_info.get_content_type() == "video/x-matroska") 
+                	|| (file_info.get_content_type() == "video/x-msvideo") ) {
                     
                     //iterate through global movie list to check for duplicate by file name
                     var iter = this.movie_list.list_iterator();
                     var dup = false;
                     while (iter.next() == true) {
-                        if (dir.get_child(filename).get_path() == iter.get().video_file.get_path())
-                            {dup = true; break;}
+                        if (dir.get_child(filename).get_path() == iter.get().video_file.get_path()) {
+                        	dup = true; 
+                        	break;
+                        }
                     }
                      
                     if (dup == false) {
                         new_movie_list.add(new Movie(dir.get_child(filename), null, null));
-                    } else {print("FOUND DUPLICATE: " + filename + "\n");}
+                    } else 
+                    	print("FOUND DUPLICATE: " + filename + "\n");
                     
                 }
-                
                 
             }
         
@@ -114,6 +118,7 @@ class Controller {
                 	break;
 		    	}
 		    }
+		    
 		    if (dupe)
 		    	continue;
             
@@ -129,139 +134,21 @@ class Controller {
     
     private bool get_and_save_info(Movie movie) {
     
-    	if (!movie.infer_title_and_year()) return false;
-        
-        print("----Getting info for %s\n", movie.video_file.get_basename());
-        
-        // Initialise TMDb object
-        var tmdb = new TMDb.TMDb("f6bfd6dfde719ce3a4c710d7258692cf");
-        
-        // Search for movie
-        if (!tmdb.search_movies(movie.search_title))
-        	return false;
-        
-        TMDb.MovieInfo tmdb_movie_info;
-        TMDb.Actor[] cast;
-        TMDb.CrewMember[] crew;
-        
-        // Query detailed info for first movie in search results
-        if (!tmdb.get_info_for_search_result(1, out tmdb_movie_info))
-        	return false;
-        
-        print(tmdb_movie_info.id.to_string() + "\n");
-        
-        movie.movie_info.id = tmdb_movie_info.id;
-        movie.movie_info.title = tmdb_movie_info.title;
-        movie.movie_info.release_date = tmdb_movie_info.release_date;
-        movie.movie_info.description = tmdb_movie_info.description;
-        movie.movie_info.tagline = tmdb_movie_info.tagline;
-        movie.movie_info.genres = tmdb_movie_info.genres;
-        movie.movie_info.poster_path = tmdb_movie_info.poster_path;
-        
-        tmdb.get_cast_and_crew(tmdb_movie_info.id, out cast, out crew);
-        
-        movie.movie_info.cast= cast;
-        movie.movie_info.crew = crew;
+    	if (!movie.get_info_from_db())
+    		return false;
         
         // Init files for caching data
         var movie_dir = this.config_dir.get_child(movie.movie_info.title);
         if (!movie_dir.query_exists()) movie_dir.make_directory();
-        GLib.File path_file = movie_dir.get_child("path");
+        movie.path_file = movie_dir.get_child("path");
         movie.info_file = movie_dir.get_child("info");
         movie.poster_file = movie_dir.get_child("poster.jpg");
         
         // save info to cache
         movie.save_info();
         
-        // Fill info file with movie info data
-        //GLib.FileUtils.set_contents(movie.info_file.get_path(), json_data);
-        
-        // Make local copy of poster image file
-        tmdb.get_image("w154", movie.movie_info.poster_path, movie.poster_file);
-        
-        // Save video file path to
-        GLib.FileUtils.set_contents(path_file.get_path(), movie.video_file.get_path());
-        
         return true;
         
-    }
-    
-    // OUTDATED!!! Now this functianality has been moved to TMDb class.
-    // looks up info from TMDb for movie and returns it with and info_file and poster_file
-    private bool get_and_save_info_old(Movie movie) {
-    
-        if (!movie.infer_title_and_year()) return false;
-        
-        print("----Getting info for %s\n", movie.video_file.get_basename());
-    
-        // send search request
-        var uri = "http://api.themoviedb.org/3/search/movie?api_key=f6bfd6dfde719ce3a4c710d7258692cf&query=" + movie.search_title + " " /*+ movie.search_year*/ ;
-        var session = new Soup.SessionSync ();
-        var message = new Soup.Message ("GET", uri);
-        message.request_headers.append("Accept", "application/json");
-        session.send_message (message);
-        string reply = (string) message.response_body.flatten ().data;
-        //print("REPLY:\n%s\n\n", reply);
-        
-         // parse response data
-        var parser = new Json.Parser ();
-        parser.load_from_data (reply, -1);
-        var root_object = parser.get_root ().get_object ();
-        var results = root_object.get_array_member("results");
-        if (results.get_length() == 0) return false;
-        var result_1 = results.get_element(0); // retrieve first result
-        
-        int64 id = result_1.get_object().get_int_member("id");
-        
-        //request detailed movie info using id
-        uri = "http://api.themoviedb.org/3/movie/" + id.to_string() + "?api_key=f6bfd6dfde719ce3a4c710d7258692cf";
-        message = new Soup.Message ("GET", uri);
-        message.request_headers.append("Accept", "application/json");
-        session.send_message (message);
-        reply = (string) message.response_body.flatten ().data;
-        //print("REPLY:\n%s\n\n", reply);
-        
-        parser = new Json.Parser ();
-        parser.load_from_data (reply, -1);
-        root_object = parser.get_root ().get_object ();
-        
-        string title = root_object.get_string_member("title");
-        string overview = root_object.get_string_member("overview");
-        string tagline = root_object.get_string_member("tagline");
-        string poster_path = root_object.get_string_member("poster_path");
-        
-        // save required info to file and assign to movie object
-        var builder = new Json.Builder();
-        builder.begin_object();
-        builder.set_member_name("id");
-        builder.add_int_value(id);
-        builder.set_member_name("title");
-        builder.add_string_value(title);
-        builder.set_member_name("description");
-        builder.add_string_value(overview);
-        builder.set_member_name("tagline");
-        builder.add_string_value(tagline);
-        builder.end_object();
-        var gen = new Json.Generator();
-        gen.set_root(builder.get_root());
-        var movie_dir = this.config_dir.get_child(title);
-        if (!movie_dir.query_exists()) movie_dir.make_directory();
-        gen.to_file(movie_dir.get_path() + "/info");
-        movie.info_file = movie_dir.get_child("info");
-        
-        // save local copy of poster image file and assign to movie object
-        File remote_image_file = File.new_for_uri("http://cf2.imgobject.com/t/p/w154" + poster_path);
-        File local_image_file = movie_dir.get_child("poster.jpg");
-    	if (!local_image_file.query_exists()) remote_image_file.copy(local_image_file, GLib.FileCopyFlags.NONE, null, null);
-    	
-    	movie.poster_file = local_image_file;
-    	
-    	//save path to video file
-    	File path = movie_dir.get_child("path");
-    	path.replace_contents(movie.video_file.get_path().data, null, false, FileCreateFlags.NONE, null, null);
-    	
-    	return true;
-     
     }
     
     //load movies cached in the config_dir. Supposed to be run before rec_load_video_files()

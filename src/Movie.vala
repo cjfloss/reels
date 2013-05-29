@@ -19,6 +19,12 @@ class Movie {
     // local file holding cached movie info
     public GLib.File info_file;
     
+    // file containing path to video file. This is only used for saving the path in cache
+    public GLib.File path_file;
+    
+    // TMDb object to talk to database
+    private TMDb.TMDb tmdb;
+    
     public Movie(GLib.File video_file, GLib.File? info_file = null, GLib.File? poster_file = null) {
     
         this.video_file = video_file;
@@ -58,6 +64,47 @@ class Movie {
             return false;
         }
         
+    }
+    
+    // queries the TMDb database for info
+    public bool get_info_from_db() {
+    
+    	if (!this.infer_title_and_year()) return false;
+        
+        print("----Getting info for %s\n", this.video_file.get_basename());
+        
+        // Initialise TMDb object
+        this.tmdb = new TMDb.TMDb("f6bfd6dfde719ce3a4c710d7258692cf");
+        
+        // Search for movie
+        if (!this.tmdb.search_movies(this.search_title))
+        	return false;
+        
+        // TMDb.MovieInfo is slightly different from our local structure here
+        // Therefore we explicitly copy the data to our MovieInfo instead of using the same stucture
+        TMDb.MovieInfo tmdb_movie_info;
+        TMDb.Actor[] cast;
+        TMDb.CrewMember[] crew;
+        
+        // Query detailed info for first movie in search results
+        if (!this.tmdb.get_info_for_search_result(1, out tmdb_movie_info))
+        	return false;
+        
+        this.movie_info.id = tmdb_movie_info.id;
+        this.movie_info.title = tmdb_movie_info.title;
+        this.movie_info.release_date = tmdb_movie_info.release_date;
+        this.movie_info.description = tmdb_movie_info.description;
+        this.movie_info.tagline = tmdb_movie_info.tagline;
+        this.movie_info.genres = tmdb_movie_info.genres;
+        this.movie_info.poster_path = tmdb_movie_info.poster_path;
+        
+        this.tmdb.get_cast_and_crew(tmdb_movie_info.id, out cast, out crew);
+        
+        this.movie_info.cast= cast;
+        this.movie_info.crew = crew;
+        
+        return true;
+    
     }
     
     // load movie info from file specified by info_file
@@ -137,10 +184,16 @@ class Movie {
 	    var gen = new Json.Generator();
 	    gen.set_pretty(true);
 	    gen.set_root(builder.get_root());
-	    if (gen.to_file(this.info_file.get_path()))
-	    	return true;
-	    else
+	    if (!gen.to_file(this.info_file.get_path()))
 	    	return false;
+	    	
+	    // Make local copy of poster image file
+        this.tmdb.get_image("w154", this.movie_info.poster_path, this.poster_file);
+	    
+        // Save video file path
+        GLib.FileUtils.set_contents(this.path_file.get_path(), this.video_file.get_path());
+        
+        return true;
     
     }
 
