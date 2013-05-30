@@ -9,6 +9,7 @@ namespace TMDb {
 		private string API_KEY;
 		private string IMAGE_BASE_URL;
 		private string CAST_URL;
+		private string REVIEWS_URL;
 		private Json.Array movie_search_results;
 		
 		public TMDb(string api_key) {
@@ -19,6 +20,7 @@ namespace TMDb {
 			this.MOVIE_INFO_URL = "http://api.themoviedb.org/3/movie/%s?api_key=" + API_KEY;
 			this.IMAGE_BASE_URL = "http://d3gtl9l2a4fn1j.cloudfront.net/t/p/";
 			this.CAST_URL = "http://api.themoviedb.org/3/movie/%s/casts?api_key=" + API_KEY;
+			this.REVIEWS_URL = "http://api.themoviedb.org/3/movie/%s/reviews?api_key=" + API_KEY;
 			
 		}
 		
@@ -197,6 +199,30 @@ namespace TMDb {
 		    }
 		    
 		    return true;
+		
+		}
+		
+		public bool get_reviews(int64 movie_id, out Review[] reviews ) {
+		
+			var uri = this.REVIEWS_URL.printf(movie_id.to_string());
+			Json.Object root;
+			if (!this.query(uri, out root))
+				return false;
+				
+			var results = root.get_array_member("results");
+			reviews = new Review[results.get_length()];
+			if (results.get_length() == 0)
+				return false;
+			for (uint index = 0; index < results.get_length(); index++) {
+		    	reviews[index] = new Review();
+		    	var iter = results.get_object_element(index);
+		    	reviews[index].id = iter.get_string_member("id");
+		    	reviews[index].author = iter.get_string_member("author");
+		    	reviews[index].content = iter.get_string_member("content");
+		    	reviews[index].url = iter.get_string_member("url");
+		    }
+			
+			return true;
 		
 		}
 	

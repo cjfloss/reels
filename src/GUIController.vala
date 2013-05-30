@@ -367,8 +367,6 @@ class GUIController: Object {
     	this.view_container.remove(this.detail_view);
     	
     	this.view_container.pack_start(this.scrolled, true, true, 0);
-    	
-    	this.view_container.show_all();
     
     }
     
@@ -382,14 +380,19 @@ class GUIController: Object {
     	});
     	
     	var iter = this.movie_item_list.list_iterator();
-    	while (iter.next() == true) {
-    	
-    		var regex = new GLib.Regex("\\Q" + search_text + "\\E", GLib.RegexCompileFlags.CASELESS, 0);
-    		GLib.MatchInfo match_info;
-    		if (regex.match(iter.get().movie.movie_info.title, 0, out match_info))
-    			this.movie_item_container.pack_start(iter.get(), false, false, 0);
-    			
-    	}
+		if (search_text == "") {
+			while (iter.next() == true)
+				this.movie_item_container.pack_start(iter.get(), false, false, 0);
+		} else {
+			while (iter.next() == true) {
+			
+				var regex = new GLib.Regex("\\Q" + search_text + "\\E", GLib.RegexCompileFlags.CASELESS, 0);
+				GLib.MatchInfo match_info;
+				if (regex.match(iter.get().movie.movie_info.title, 0, out match_info))
+					this.movie_item_container.pack_start(iter.get(), false, false, 0);
+					
+			}
+		}
     
     }
     

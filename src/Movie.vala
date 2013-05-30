@@ -31,6 +31,7 @@ class Movie {
         if ((info_file != null) && (info_file.query_exists())) this.info_file = info_file;
         if ((poster_file != null) && (poster_file.query_exists())) this.poster_file = poster_file;
         this.movie_info = new MovieInfo();
+        this.tmdb = new TMDb.TMDb("f6bfd6dfde719ce3a4c710d7258692cf");
     
     }
     
@@ -72,9 +73,6 @@ class Movie {
     	if (!this.infer_title_and_year()) return false;
         
         print("----Getting info for %s\n", this.video_file.get_basename());
-        
-        // Initialise TMDb object
-        this.tmdb = new TMDb.TMDb("f6bfd6dfde719ce3a4c710d7258692cf");
         
         // Search for movie
         if (!this.tmdb.search_movies(this.search_title))
@@ -221,6 +219,15 @@ class Movie {
         GLib.FileUtils.set_contents(this.path_file.get_path(), this.video_file.get_path());
         
         return true;
+    
+    }
+    
+    public bool get_reviews_from_db() {
+    
+    	if (this.tmdb.get_reviews(this.movie_info.id, out this.movie_info.reviews))
+    		return true;
+    	else
+    		return false;
     
     }
 

@@ -18,6 +18,8 @@ class MovieInfo {
 		
 		public TMDb.CrewMember[] crew;
 		
+		public TMDb.Review[] reviews;
+		
 		public bool get_director(out string director) {
 		
 			if (this.crew.length == 0)
