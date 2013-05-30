@@ -202,6 +202,7 @@ class GUIController: Object {
 		pane.pack2(this.view_container, true, false);
         pane.set_position(130);
         pane.name = "pane";
+        pane.set_size_request(1000, -1);
         
         vbox.pack_start(pane, true, true, 0);
         
@@ -213,8 +214,17 @@ class GUIController: Object {
         var css_provider = new Gtk.CssProvider();
         this.movie_item_container.name = "movie_item_container";
         css_provider.load_from_data("""
-        	#content_area > GtkViewport {
+        	#content_area > GtkViewport,
+        	#detail_view_container,
+        	#static > *,
+        	#detail_view_container > * > * {
         		background-color: #ffffff;
+        	}
+        	#static GtkButton {
+        		background: #ffffff;
+        	}
+        	#static GtkButton:active {
+        		background: #e0e0e0;
         	}
         	.control_button {
         		border-radius: 5;

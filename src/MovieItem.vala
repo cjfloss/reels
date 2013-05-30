@@ -6,6 +6,7 @@ class MovieItem : Gtk.Box {
 	
 	public Gtk.Box control_box;
 	public Gtk.Button info_button;
+	public Gtk.Separator separator;
 
 	public MovieItem(Movie _movie, play_func _play, info_func _info) {
 	
@@ -104,11 +105,13 @@ class MovieItem : Gtk.Box {
         label_desc.set_alignment(0.0f, 0.0f);
         label_desc.ellipsize = Pango.EllipsizeMode.END;
         
+        this.separator = new Gtk.Separator(Gtk.Orientation.HORIZONTAL);
+        
         vbox.set_homogeneous(false);
         hbox.set_homogeneous(false);
         hbox_desc.set_homogeneous(false);
         hbox_title.pack_start(label_title, false, false, 5);
-        hbox_desc.pack_start(label_desc, true, true, 0);
+        hbox_desc.pack_start(label_desc, true, true, 5);
         vbox_controls.set_homogeneous(false);
         vbox_controls_inner.pack_start(play_button, false, false, 5);
         vbox_controls_inner.pack_start(info_button, false, false, 5);
@@ -128,7 +131,7 @@ class MovieItem : Gtk.Box {
         
         this.set_homogeneous(false);
         this.pack_start(hbox, false, false, 10);
-        this.pack_start(new Gtk.Separator(Gtk.Orientation.HORIZONTAL), false, false, 0);
+        this.pack_start(this.separator, false, false, 0);
         
         this.get_style_context().add_class("movie-item");
 
