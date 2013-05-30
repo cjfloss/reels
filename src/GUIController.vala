@@ -217,7 +217,7 @@ class GUIController: Object {
         	#content_area > GtkViewport,
         	#detail_view_container,
         	#static > *,
-        	#detail_view_container > * > * {
+        	#review_scrolled {
         		background-color: #ffffff;
         	}
         	#static GtkButton {
