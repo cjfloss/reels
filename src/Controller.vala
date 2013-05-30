@@ -2,6 +2,7 @@ class Controller {
 
 	// Global movie list.
    	// We assume once a movie makes it to the global movie list, everything about it is perfect.
+   	// Note: It's not safe to access any member after gui_controller.add_movie_item() is called without calling Gdk.threads_enter()
     private Gee.ArrayList<Movie> movie_list;
     
     private GLib.File config_dir;
@@ -211,6 +212,7 @@ class Controller {
         	movie = iter.get();
         	print("Processing " + movie.video_file.get_basename() + "\n");
         	movie.load_info();
+        	//print(movie.movie_info.crew[0].name);
             this.gui_controller.add_movie_item(movie);
 		}
 		

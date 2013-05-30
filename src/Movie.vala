@@ -118,12 +118,35 @@ class Movie {
         this.movie_info.title = root.get_string_member("title");
         this.movie_info.description = root.get_string_member("description");
         this.movie_info.tagline = root.get_string_member("tagline");
-        
         var genres = root.get_array_member("genres");
         this.movie_info.genres = new string[genres.get_length()];
         for (uint iii = 0; iii < genres.get_length(); iii++) {
         	this.movie_info.genres[iii] = genres.get_element(iii).get_string();
         }
+        var cast_json = root.get_array_member("cast");
+        var cast = this.movie_info.cast;
+        this.movie_info.cast = new TMDb.Actor[cast_json.get_length()];
+        for (uint index = 0; index < cast_json.get_length(); index++) {
+        	this.movie_info.cast[index] = new TMDb.Actor();
+	    	var iter = cast_json.get_object_element(index);
+	    	this.movie_info.cast[index].id = iter.get_int_member("id");
+	    	this.movie_info.cast[index].name = iter.get_string_member("name");
+	    	this.movie_info.cast[index].character = iter.get_string_member("character");
+	    	this.movie_info.cast[index].order = iter.get_int_member("order");
+	    	this.movie_info.cast[index].profile_path = iter.get_string_member("profile_path");
+        }
+        var crew_json = root.get_array_member("crew");
+        //var crew = this.movie_info.crew;
+        this.movie_info.crew = new TMDb.CrewMember[crew_json.get_length()];
+        for (uint index = 0; index < crew_json.get_length(); index++) {
+	    	this.movie_info.crew[index] = new TMDb.CrewMember();
+	    	var iter = crew_json.get_object_element(index);
+	    	this.movie_info.crew[index].id = iter.get_int_member("id");
+	    	this.movie_info.crew[index].name = iter.get_string_member("name");
+	    	this.movie_info.crew[index].department = iter.get_string_member("department");
+	    	this.movie_info.crew[index].job = iter.get_string_member("job");
+	    	this.movie_info.crew[index].profile_path = iter.get_string_member("profile_path");
+	    }
         return;
     
     }
@@ -181,9 +204,13 @@ class Movie {
 	    }
 	    builder.end_array();
 	    builder.end_object();
+	    
 	    var gen = new Json.Generator();
+	    
 	    gen.set_pretty(true);
+	    
 	    gen.set_root(builder.get_root());
+	    
 	    if (!gen.to_file(this.info_file.get_path()))
 	    	return false;
 	    	

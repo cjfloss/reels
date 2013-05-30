@@ -15,6 +15,7 @@ valac -g --disable-warnings --target-glib=2.32 --thread \
 	./src/AppMain.vala \
 	./src/Movie.vala \
 	./src/GUIController.vala \
+	./src/DetailView.vala \
 	./src/MovieItem.vala \
 	./src/AsyncMessage.vala \
 	./src/MovieInfo.vala \

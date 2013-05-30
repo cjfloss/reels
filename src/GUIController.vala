@@ -48,6 +48,11 @@ class GUIController: Object {
         set {app_menu = value;}
     }*/
     
+    
+    private Granite.Widgets.ThinPaned pane;
+    
+    private Gtk.Box view_container;
+    
     private Granite.Widgets.SourceList source_list;
     
     private Granite.Widgets.SourceList.ExpandableItem source_category_genres;
@@ -55,6 +60,8 @@ class GUIController: Object {
     private Gtk.ScrolledWindow scrolled;
     
     private Gtk.Box movie_item_container;
+    
+    private DetailView detail_view;
     
     // ##################################################################################
     
@@ -187,10 +194,14 @@ class GUIController: Object {
         source_list_root.add(source_category_genres);
         this.source_list.item_selected.connect(this.on_source_list_item_selected);
         
-	    var pane = new Granite.Widgets.ThinPaned();
+        this.view_container = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
+        this.view_container.pack_start(scrolled, true, true, 0);
+        
+	    this.pane = new Granite.Widgets.ThinPaned();
 		pane.pack1(this.source_list, true, false);
-		pane.pack2(this.scrolled, true, false);
+		pane.pack2(this.view_container, true, false);
         pane.set_position(130);
+        pane.name = "pane";
         
         vbox.pack_start(pane, true, true, 0);
         
@@ -202,11 +213,12 @@ class GUIController: Object {
         var css_provider = new Gtk.CssProvider();
         this.movie_item_container.name = "movie_item_container";
         css_provider.load_from_data("""
-        	#content_area > GtkViewport, #movie_item_container, .control_button:active *, .control_buttons:hover *, .control_button * {background-color: #ffffff;}
+        	#content_area > GtkViewport {
+        		background-color: #ffffff;
+        	}
         	.control_button {
-        		border-radius: 10px;
+        		border-radius: 5;
         		background: #ffffff;
-        		border-style: none;
         	}
         """, -1);
         (new Gtk.StyleContext()).add_provider_for_screen(this.main_window.get_screen(), css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
@@ -267,7 +279,7 @@ class GUIController: Object {
         
         Gdk.threads_enter();
         
-        var movie_item = new MovieItem(movie, this.play);
+        var movie_item = new MovieItem(movie, this.play, this.show_detail_view);
         this.movie_item_container.pack_start(movie_item, false, false, 0);
         this.movie_item_list.add(movie_item);
         //movie_item.show_all();
@@ -327,6 +339,29 @@ class GUIController: Object {
     	});
     	
     }
+    
+    public void show_detail_view(Movie movie) {
+    
+    	this.view_container.remove(this.scrolled);
+    	
+    	this.detail_view = new DetailView(movie, this.play, this.show_detail_view, this.show_list_view);
+    	
+    	this.view_container.pack_start(this.detail_view, true, true, 0);
+    	
+    	this.view_container.show_all();
+    
+    }
+    
+    public void show_list_view() {
+    
+    	this.view_container.remove(this.detail_view);
+    	
+    	this.view_container.pack_start(this.scrolled, true, true, 0);
+    	
+    	this.view_container.show_all();
+    
+    }
+    
     
     private void on_search_update(string search_text) {
     
