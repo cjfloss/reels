@@ -55,7 +55,13 @@ class DetailView : Gtk.Box {
 		
 		this.pack_start(event_box, true, true, 0);
 		
-		this.reviews_container.fill();
+		this.static_notebook.page_changed.connect((widget, page_num) => {
+			
+			if (page_num == 1) {
+				this.reviews_container.fill();
+			}	
+			
+		});
 		
 	}
 	

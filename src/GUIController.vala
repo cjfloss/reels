@@ -16,6 +16,12 @@ class GUIController: Object {
         
         print("show_all called\n");
         
+        /*GLib.Timeout.add_seconds(2, () => {
+        	int width = this.scrolled.get_allocated_width();
+        	print("width: %s\n", width.to_string());
+        	return true;
+        });*/
+        
     }
     
     // reference to the main Gtk.Application object
