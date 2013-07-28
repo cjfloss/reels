@@ -1,20 +1,22 @@
-class MovieItem : Gtk.Box {
+/* This is an item in a MovieListView */
 
-	public Movie movie {get; set construct;}
-	private play_func play;
-	private info_func info;
+class MovieListViewItem : Gtk.Box {
+
+    public Movie movie {get; set construct;}
+	//private play_func play;
+	//private info_func info;
 	
 	public Gtk.Box control_box;
 	public Gtk.Button info_button;
 	public Gtk.Separator separator;
 
-	public MovieItem(Movie _movie, play_func _play, info_func _info) {
+	public MovieListViewItem(Movie _movie/*, play_func _play, info_func _info*/) {
 	
 		Object(orientation : Gtk.Orientation.VERTICAL);
 		
 		this.movie = _movie;
-		this.play = _play;
-		this.info = _info;
+		//this.play = _play;
+		//this.info = _info;
 		
 		// GUI elements shown in tree heirarchy
 		var hbox = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 0);
@@ -41,7 +43,7 @@ class MovieItem : Gtk.Box {
 		play_button.get_style_context().add_class("control_button");
 		play_button.set_focus_on_click(false);
 		play_button.clicked.connect(() => {
-        	this.play(this.movie);
+        	this.play_movie(this.movie);
         });
 		
 		// set up info button
@@ -59,7 +61,7 @@ class MovieItem : Gtk.Box {
 		info_button.get_style_context().add_class("control_button");
 		info_button.set_focus_on_click(false);
 		info_button.clicked.connect(() => {
-			this.info(this.movie);
+			this.show_detail_view(this.movie);
 		});
 		      
         //init image
@@ -138,8 +140,10 @@ class MovieItem : Gtk.Box {
 		
 	}
 	
-	public delegate void play_func(Movie movie);
-	
-	public delegate void info_func(Movie movie);
-	
+	// propagates the play command to the MovieListView
+    public signal void play_movie(Movie movie);
+    
+    // propagates the show detail view command to the MovieListView
+    public signal void show_detail_view(Movie movie);
+
 }
