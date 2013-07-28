@@ -106,8 +106,8 @@ class Controller {
             
             //movie.load_info();
             
-            // We now have the info for the movie, including title
-            // We use the title to remove any duplicates in the global movie list
+            // We now have the info for the movie, including id
+            // We use the id to remove any duplicates in the global movie list
 		    var iter_glob = this.movie_list.list_iterator();
 		    bool dupe = false;
 		    Movie movie_glob;
